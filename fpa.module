@@ -1,0 +1,23 @@
+<?php
+// $Id$
+
+function fpa_form_content_field_edit_form_alter(&$form, &$form_state) {
+  if (user_access('administer permissions')) {
+    $form['basic'] = array('fpa' => array('#value' => l('Manage Field Permissions', 'admin/user/permissions', array('query' => array('render' => 'overlay'), 'attributes' => array('style' => 'float: right;', 'class' => 'fpa_modal'))),)) + $form['basic'];
+    modalframe_parent_js();
+    drupal_add_js(drupal_get_path('module', 'fpa') .'/fpa_parent.js', 'module');
+    drupal_add_js(array('fpa_field' => $form['#field']['field_name']), 'setting');
+  }
+}
+
+function fpa_form_user_admin_perm_alter(&$form, &$form_state) {
+  if ($_GET['render'] == 'overlay') {
+    drupal_add_css(drupal_get_path('module', 'fpa') .'/fpa_child.css', 'module');
+    modalframe_child_js();
+    $form['#submit'][] = 'fpa_user_admin_perm_submit';
+  }
+}
+
+function fpa_user_admin_perm_submit() {
+  modalframe_close_dialog();
+}

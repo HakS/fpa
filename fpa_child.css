@@ -1,0 +1,14 @@
+/*
+ * $Id$
+ */
+div.help {
+  display: none;
+}
+
+table#permissions tbody tr {
+  display: none;
+}
+
+table#permissions tr.fpa_show {
+  display: table-row;
+}
