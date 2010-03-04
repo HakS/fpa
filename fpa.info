@@ -1,8 +1,7 @@
 ; $Id$
-
 name = "Field Permissions Admin"
 description = "Provides quick access to a fields permissions."
-
-dependencies[] = content_permissions
 dependencies[] = modalframe
+package = CCK
 core = 6.x
+php = 5.0

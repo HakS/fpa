@@ -2,7 +2,7 @@
 // $Id$
 
 function fpa_form_content_field_edit_form_alter(&$form, &$form_state) {
-  if (user_access('administer permissions')) {
+  if (user_access('administer permissions') && (module_exists('content_permissions') || module_exists('field_permissions'))) {
     $form['basic'] = array('fpa' => array('#value' => l('Manage Field Permissions', 'admin/user/permissions', array('query' => array('render' => 'overlay'), 'attributes' => array('style' => 'float: right;', 'class' => 'fpa_modal'))),)) + $form['basic'];
     modalframe_parent_js();
     drupal_add_js(drupal_get_path('module', 'fpa') .'/fpa_parent.js', 'module');
