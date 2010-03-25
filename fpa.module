@@ -1,12 +1,39 @@
 <?php
 // $Id$
 
-function fpa_form_content_field_edit_form_alter(&$form, &$form_state) {
-  if (user_access('administer permissions') && (module_exists('content_permissions') || module_exists('field_permissions'))) {
-    $form['basic'] = array('fpa' => array('#value' => l('Manage Field Permissions', 'admin/user/permissions', array('query' => array('render' => 'overlay'), 'attributes' => array('style' => 'float: right;', 'class' => 'fpa_modal'))),)) + $form['basic'];
+function fpa_form_alter(&$form, &$form_state, $form_id) {
+  
+  switch ($form_id) {
+    case 'content_field_edit_form':
+      if ((module_exists('content_permissions') || module_exists('field_permissions'))) {
+        $perm = $form['#field']['field_name'];
+        $pos = &$form['field'];
+      }
+      break;
+    case 'node_type_form':
+      $perm = $form['#node_type']->type .' content';
+      $pos = &$form;
+      break;
+  }
+  
+  if ($perm && user_access('administer permissions')) {
+    
+    $pos['field_permissions_administration'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Permissions'),
+      '#collapsible' => FALSE,
+      '#collapsed' => FALSE,
+      '#description' => t('Clicking on this link will launch a modal frame displaying the appropriate permissions.'),
+    );
+    
+    $pos['field_permissions_administration']['fpa'] = array(
+      '#type' => 'markup',
+      '#value' => l('Manage Permissions', 'admin/user/permissions', array('query' => array('render' => 'overlay'), 'attributes' => array('class' => 'fpa_modal', 'onclick' => 'return false;'))),
+    );
+    
     modalframe_parent_js();
     drupal_add_js(drupal_get_path('module', 'fpa') .'/fpa_parent.js', 'module');
-    drupal_add_js(array('fpa_field' => $form['#field']['field_name']), 'setting');
+    drupal_add_js(array('fpa_field' => $perm), 'setting');
   }
 }
 
