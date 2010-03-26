@@ -18,7 +18,7 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
   
   if ($perm && user_access('administer permissions')) {
     
-    $pos['field_permissions_administration'] = array(
+    $pos['fpa_fieldset'] = array(
       '#type' => 'fieldset',
       '#title' => t('Permissions'),
       '#collapsible' => FALSE,
@@ -26,14 +26,14 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
       '#description' => t('Clicking on this link will launch a modal frame displaying the appropriate permissions.'),
     );
     
-    $pos['field_permissions_administration']['fpa'] = array(
+    $pos['fpa_fieldset']['fpa'] = array(
       '#type' => 'markup',
       '#value' => l('Manage Permissions', 'admin/user/permissions', array('query' => array('render' => 'overlay'), 'attributes' => array('class' => 'fpa_modal', 'onclick' => 'return false;'))),
     );
     
     modalframe_parent_js();
     drupal_add_js(drupal_get_path('module', 'fpa') .'/fpa_parent.js', 'module');
-    drupal_add_js(array('fpa_field' => $perm), 'setting');
+    drupal_add_js(array('fpa_perm' => $perm), 'setting');
   }
 }
 
