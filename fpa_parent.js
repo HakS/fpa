@@ -1,6 +1,6 @@
 // $Id$
 jQuery(function ($) {
-  $('.fpa_modal').click(function () {
+  $('#fpa_modal_link').click(function () {
     Drupal.modalFrame.open({
       url: $(this).attr('href'),
       draggable: false,
@@ -8,13 +8,27 @@ jQuery(function ($) {
       height: 600,
       autoFit: false,
       onLoad: function (self, iFrameWindow, iFrameDocument) {
-        var odd_or_even = 'even';
-        $("#permissions", iFrameDocument).find("td.permission").filter(function () {
+        var rows = $("#permissions", iFrameDocument)
+        .find("td.permission")
+        .filter(function () {
           return this.innerHTML.indexOf(Drupal.settings.fpa_perm) != -1;
-        }).parent().each(function(index) {
-          odd_or_even = odd_or_even == 'even' ? 'odd' : 'even';
-          $(this).removeClass('odd even').addClass(odd_or_even);
-        }).addClass('fpa_show');
+        }).parent()
+        .removeClass('odd even')
+        .filter(":even").addClass('odd').end()
+        .filter(":odd").addClass('even').end()
+        .addClass('fpa_show');
+        
+        if (typeof($.fn.prevUntil) == "function") {
+          rows.each(function(index) {
+            
+              var module = $(this).prevUntil("tr:has(td.module)");
+              if (module.length == 0) { //prevUntil will be empty if module row was immediate before
+                module = module.end();
+              }
+              module.prev("tr:has(td.module)").addClass('fpa_show');
+          });
+        }
+        
       }
     });
     return false;

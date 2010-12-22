@@ -28,7 +28,7 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
     
     $pos['fpa_fieldset']['fpa'] = array(
       '#type' => 'markup',
-      '#value' => l('Manage Permissions', 'admin/user/permissions', array('query' => array('render' => 'overlay'), 'attributes' => array('class' => 'fpa_modal', 'onclick' => 'return false;'))),
+      '#value' => l('Manage Permissions', 'admin/user/permissions', array('query' => array('render' => 'overlay'), 'attributes' => array('id' => 'fpa_modal_link', 'class' => 'fpa_modal', 'onclick' => 'return false;'))),
     );
     
     modalframe_parent_js();
