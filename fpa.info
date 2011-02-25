@@ -1,4 +1,3 @@
-; $Id$
 name = "Field Permissions Admin"
 description = "Provides quick access to a fields permissions."
 dependencies[] = modalframe

@@ -1,4 +1,3 @@
-// $Id$
 jQuery(function ($) {
   $('#fpa_modal_link').click(function () {
     Drupal.modalFrame.open({
