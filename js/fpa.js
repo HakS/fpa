@@ -21,4 +21,14 @@
       });
     }
   };
+  Drupal.behaviors.fpa_modalframe = function (context) {
+    $('a.fpa_modalframe', context).click(function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      Drupal.modalFrame.open({
+        url: $(this).attr('href'),
+        draggable: false
+      });
+    });
+  };
 })(jQuery);
