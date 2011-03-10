@@ -1,13 +1,9 @@
 /*
  */
-div.help {
-  display: none;
-}
-
 table#permissions tbody tr {
   display: none;
 }
 
-table#permissions tr.fpa_show {
+table#permissions tbody tr.fpa_show {
   display: table-row;
 }

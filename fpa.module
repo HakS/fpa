@@ -1,6 +1,22 @@
 <?php
 
+function fpa_menu() {
+  $items = array();
+  
+  $items['fpa_modal/%ctools_js/permissions'] = array(
+      'title' => 'Permissions',
+      'page callback' => '_fpa_ctools',
+      'page arguments' => array(1, 3),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
 function fpa_form_alter(&$form, &$form_state, $form_id) {
+  drupal_add_js('data');
+  $perm = NULL;
   
   switch ($form_id) {
     case 'content_field_edit_form':
@@ -27,23 +43,51 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
     
     $pos['fpa_fieldset']['fpa'] = array(
       '#type' => 'markup',
-      '#value' => l('Manage Permissions', 'admin/user/permissions', array('query' => array('render' => 'overlay'), 'attributes' => array('id' => 'fpa_modal_link', 'class' => 'fpa_modal', 'onclick' => 'return false;'))),
+      '#value' => l('Manage Permissions', 'admin/user/permissions', array('query' => array('fpa_perm' => $perm), 'attributes' => array('target' => '_blank'))),
     );
     
-    modalframe_parent_js();
-    drupal_add_js(drupal_get_path('module', 'fpa') .'/fpa_parent.js', 'module');
-    drupal_add_js(array('fpa_perm' => $perm), 'setting');
+    if (module_exists('ctools')) {
+      drupal_add_js(drupal_get_path('module', 'fpa') .'/js/fpa_parent.js', 'module');
+      ctools_include('ajax');
+      ctools_include('modal');
+      ctools_modal_add_js();
+      
+      $pos['fpa_fieldset']['fpa']['#value'] = ctools_modal_text_button(t('Manage Permissions'), 'fpa_modal/nojs/permissions/'.urlencode($perm), t('Login via modal'),  'ctools-modal-ctools-sample-style');
+    }
+    
   }
 }
 
 function fpa_form_user_admin_perm_alter(&$form, &$form_state) {
-  if ($_GET['render'] == 'overlay') {
-    drupal_add_css(drupal_get_path('module', 'fpa') .'/fpa_child.css', 'module');
-    modalframe_child_js();
-    $form['#submit'][] = 'fpa_user_admin_perm_submit';
+  if (isset($_GET['fpa_perm'])) {
+    drupal_add_css(drupal_get_path('module', 'fpa') .'/css/fpa_child.css', 'module');
+    drupal_add_js(drupal_get_path('module', 'fpa') .'/js/fpa_parent.js', 'module');
+    drupal_add_js(array('fpa_perm' => $_GET['fpa_perm']), 'setting');
   }
 }
 
-function fpa_user_admin_perm_submit() {
-  modalframe_close_dialog();
+function _fpa_ctools($js = NULL, $perm) {
+  module_load_include('inc', 'user', 'user.admin');
+  // Fall back if $js is not set.
+  if (!$js) {
+    return drupal_get_form('user_admin_perm');
+  }
+
+  ctools_include('modal');
+  ctools_include('ajax');
+  $form_state = array(
+    'title' => t('Permissions'),
+    'ajax' => TRUE,
+  );
+  $output = ctools_modal_form_wrapper('user_admin_perm', $form_state);
+  
+  if (empty($output)) {
+    $output = array(ctools_ajax_command_reload());
+  }
+  else {
+    ctools_add_css('fpa_child', 'fpa');
+    drupal_add_js(array('fpa_perm' => $perm), 'setting');
+  }
+  
+  ctools_ajax_render($output);
 }
