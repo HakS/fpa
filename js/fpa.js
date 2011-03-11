@@ -8,18 +8,8 @@
     .removeClass('odd even')
     .filter(":even").addClass('odd').end()
     .filter(":odd").addClass('even').end()
-    .addClass('fpa_show');
-    
-    if (typeof($.fn.prevUntil) == "function") {
-      rows.each(function(index) {
-        
-          var module = $(this).prevUntil("tr:has(td.module)");
-          if (module.length == 0) { //prevUntil will be empty if module row was immediate before
-            module = module.end();
-          }
-          module.prev("tr:has(td.module)").addClass('fpa_show');
-      });
-    }
+    .addClass('fpa_show')
+    .prevAll("tr:has(td.module):first").addClass('fpa_show');
   };
   Drupal.behaviors.fpa_modalframe = function (context) {
     $('a.fpa_modalframe', context).click(function (e) {
