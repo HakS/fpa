@@ -46,8 +46,6 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
     );
     
     if (module_exists('ctools')) {
-      ctools_add_js('fpa', 'fpa');
-      ctools_add_css('fpa', 'fpa');
       ctools_include('ajax');
       ctools_include('modal');
       ctools_modal_add_js();
@@ -86,6 +84,11 @@ function _fpa_modalframe_submit() {
 function _fpa_ctools($js = NULL, $perm) {
   // Need to include the file that contains the permissions form.
   module_load_include('inc', 'user', 'user.admin');
+  
+  drupal_add_js(array('fpa_perm' => $perm), 'setting');
+  ctools_add_js('fpa', 'fpa');
+  ctools_add_css('fpa', 'fpa');
+    
   // Fall back if $js is not set.
   if (!$js) {
     return drupal_get_form('user_admin_perm');
@@ -101,9 +104,6 @@ function _fpa_ctools($js = NULL, $perm) {
   
   if (empty($output)) {
     $output = array(ctools_ajax_command_reload());
-  }
-  else {
-    drupal_add_js(array('fpa_perm' => $perm), 'setting');
   }
   
   ctools_ajax_render($output);
