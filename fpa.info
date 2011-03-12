@@ -1,6 +1,4 @@
-name = "Field Permissions Admin"
-description = "Provides quick access to a fields permissions."
-;dependencies[] = modalframe
-package = CCK
+name = "Fast Permissions Administration"
+description = "Provides quick access to a content type's or field's permissions."
 core = 6.x
 php = 5.0
