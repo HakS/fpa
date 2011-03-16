@@ -65,15 +65,15 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
 }
 
 function fpa_form_user_admin_perm_alter(&$form, &$form_state) {
+  if (isset($_GET['fpa_method']) && $_GET['fpa_method'] == 'modalframe') {
+    modalframe_child_js();
+    $form['#submit'][] = '_fpa_modalframe_submit';
+  }
+  $fpa_path = drupal_get_path('module', 'fpa');
+  drupal_add_css($fpa_path .'/css/fpa.css', 'module');
+  drupal_add_js($fpa_path .'/js/fpa.js', 'module');
   if (isset($_GET['fpa_perm'])) {
-    if (isset($_GET['fpa_method']) && $_GET['fpa_method'] == 'modalframe') {
-      modalframe_child_js();
-      $form['#submit'][] = '_fpa_modalframe_submit';
-    }
-    $fpa_path = drupal_get_path('module', 'fpa');
-    drupal_add_css($fpa_path .'/css/fpa.css', 'module');
-    drupal_add_js($fpa_path .'/js/fpa.js', 'module');
-    drupal_add_js(array('fpa_perm' => $_GET['fpa_perm']), 'setting');
+    drupal_add_js(array('fpa_perm' => $_GET['fpa_perm'] ? $_GET['fpa_perm'] : ''), 'setting');
   }
 }
 

@@ -1,9 +1,9 @@
 /*
  */
-table#permissions tbody tr {
+#permissions.fpa_enabled tbody tr {
   display: none;
 }
 
-table#permissions tbody tr.fpa_show {
+#permissions.fpa_enabled tbody tr.fpa_show {
   display: table-row;
 }
