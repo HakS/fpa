@@ -21,6 +21,12 @@
     });
     $('<input id="fpa_search" type="text" />')
     .prependTo('#user-admin-perm')
+    .keypress(function (e) {
+      //prevent enter from submitting form
+      if (e.which == 13) {
+        return false;
+      }
+    })
     .keyup(function (e) {
       var $val = $(this).val();
       if ($val != '') {
