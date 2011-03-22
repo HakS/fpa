@@ -6,7 +6,7 @@ function fpa_menu() {
   $items['fpa_modal/%ctools_js/permissions'] = array(
       'title' => 'Permissions',
       'page callback' => '_fpa_ctools',
-      'page arguments' => array(1, 3),
+      'page arguments' => array(1),
       'access callback' => TRUE,
       'type' => MENU_CALLBACK,
   );
@@ -36,8 +36,8 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
     $pos['fpa_fieldset'] = array(
       '#type' => 'fieldset',
       '#title' => t('Permissions'),
-      '#collapsible' => FALSE,
-      '#collapsed' => FALSE,
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
       '#description' => t('Clicking on this link will launch a modal/tab/window displaying the appropriate permissions.'),
     );
     
@@ -45,7 +45,15 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
       '#type' => 'markup',
     );
     
-    $method = array_shift(array_intersect(array('dialog','ctools','modalframe'), array_keys(module_list())));
+    // available modal modules in order of priority
+    $supported_modules = array(
+    	//'dialog', // dialog api is buggy
+  		'ctools',
+  		'modalframe',
+    );
+    
+    // gets the most prefered modal method from the available methods
+    $method = array_shift(array_intersect($supported_modules, array_keys(module_list())));
     
     $attributes = array();
     $query = array('fpa_perm' => $perm, 'fpa_method' => $method);
@@ -82,7 +90,6 @@ function fpa_form_user_admin_perm_alter(&$form, &$form_state) {
     $form['#submit'][] = '_fpa_modalframe_submit';
   }
   $fpa_path = drupal_get_path('module', 'fpa');
-  drupal_add_css($fpa_path .'/css/fpa.css', 'module');
   drupal_add_js($fpa_path .'/js/fpa.js', 'module');
   drupal_add_js(array('fpa_perm' => $_GET['fpa_perm'] ? $_GET['fpa_perm'] : ''), 'setting');
 }
@@ -91,7 +98,7 @@ function _fpa_modalframe_submit() {
   modalframe_close_dialog();
 }
 
-function _fpa_ctools($js = NULL, $perm) {
+function _fpa_ctools($js = NULL) {
   // Need to include the file that contains the permissions form.
   module_load_include('inc', 'user', 'user.admin');
   
