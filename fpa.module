@@ -3,7 +3,7 @@
 function fpa_menu() {
   $items = array();
   
-  $items['fpa_modal/%ctools_js/permissions'] = array(
+  $items['fpa_modal/%fpa_js/permissions'] = array(
       'title' => 'Permissions',
       'page callback' => '_fpa_ctools',
       'page arguments' => array(1),
@@ -12,6 +12,13 @@ function fpa_menu() {
   );
   
   return $items;
+}
+
+function fpa_js_load($arg) {
+  if (module_exists('ctools')) {
+    return ctools_js_load($arg);
+  }
+  return 0;
 }
 
 function fpa_form_alter(&$form, &$form_state, $form_id) {
@@ -55,6 +62,7 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
     // gets the most prefered modal method from the available methods
     $method = array_shift(array_intersect($supported_modules, array_keys(module_list())));
     
+    $path = 'fpa_modal/nojs/permissions';
     $attributes = array();
     $query = array('fpa_perm' => $perm, 'fpa_method' => $method);
     
@@ -75,12 +83,13 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
         $attributes['class'] = 'fpa_modalframe';
         break;
       default:
+        $path = 'admin/user/permissions';
         $attributes['target'] = '_blank';
         $query['fpa_method'] = '_blank';
         break;
     }
     
-    $pos['fpa_fieldset']['fpa']['#value'] = l(t('Manage Permissions'), 'fpa_modal/nojs/permissions', array('query' => $query, 'attributes' => $attributes));
+    $pos['fpa_fieldset']['fpa']['#value'] = l(t('Manage Permissions'), $path, array('query' => $query, 'attributes' => $attributes));
   }
 }
 
