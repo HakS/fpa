@@ -47,9 +47,9 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
     
     // available modal modules in order of priority
     $supported_modules = array(
-    	//'dialog', // dialog api is buggy
-  		'ctools',
-  		'modalframe',
+      //'dialog', // dialog api is buggy
+      'ctools',
+      'modalframe',
     );
     
     // gets the most prefered modal method from the available methods
