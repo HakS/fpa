@@ -22,7 +22,7 @@ function fpa_js_load($arg) {
 }
 
 function fpa_form_alter(&$form, &$form_state, $form_id) {
-  
+  dpm(func_get_args());
   switch ($form_id) {
     case 'content_field_edit_form':
       if ((module_exists('content_permissions') || module_exists('field_permissions'))) {
@@ -31,7 +31,7 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
       }
       break;
     case 'node_type_form':
-      $perm = $form['#node_type']->type .' content';
+      $perm = $form['#node_type']->type .':';
       $pos = &$form;
       break;
   }
@@ -46,6 +46,7 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
       '#description' => t('Clicking on this link will launch a modal/tab/window displaying the appropriate permissions.'),
+      '#group' => 'additional_settings',
     );
     
     $pos['fpa_fieldset']['fpa'] = array(
@@ -83,24 +84,24 @@ function fpa_form_alter(&$form, &$form_state, $form_id) {
         $attributes['class'] = 'fpa_modalframe';
         break;
       default:
-        $path = 'admin/user/permissions';
+        $path = 'admin/people/permissions';
         $attributes['target'] = '_blank';
         $query['fpa_method'] = '_blank';
         break;
     }
     
-    $pos['fpa_fieldset']['fpa']['#value'] = l(t('Manage Permissions'), $path, array('query' => $query, 'attributes' => $attributes));
+    $pos['fpa_fieldset']['fpa']['#markup'] = l(t('Manage Permissions'), $path, array('query' => $query, 'attributes' => $attributes));
   }
 }
 
-function fpa_form_user_admin_perm_alter(&$form, &$form_state) {
-  if ($_GET['fpa_method'] == 'modalframe') {
+function fpa_form_user_admin_permissions_alter(&$form, &$form_state) {
+  if (isset($_GET['fpa_method']) && $_GET['fpa_method'] == 'modalframe') {
     modalframe_child_js();
     $form['#submit'][] = '_fpa_modalframe_submit';
   }
   $fpa_path = drupal_get_path('module', 'fpa');
-  drupal_add_js($fpa_path .'/js/fpa.js', 'module');
-  drupal_add_js(array('fpa_perm' => $_GET['fpa_perm'] ? $_GET['fpa_perm'] : ''), 'setting');
+  drupal_add_js($fpa_path .'/js/fpa.js');
+  drupal_add_js(array('fpa_perm' => isset($_GET['fpa_perm']) && $_GET['fpa_perm'] ? $_GET['fpa_perm'] : ''), 'setting');
 }
 
 function _fpa_modalframe_submit() {
