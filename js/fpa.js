@@ -41,7 +41,7 @@
             .filter(":odd").addClass('even').end();
         }
       })
-      .wrap('<div class="form-item" class="form-type-textfield" />')
+      .wrap('<div class="form-item form-type-textfield" />')
       .before('<label for="fpa_search">Search:</label>')
       .after('<div class="description">Start typing and only permissions that contain the entered text will be displayed.</div>')
       .val(Drupal.settings.fpa.perm);
