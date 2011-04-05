@@ -1,27 +1,31 @@
 (function ($) {
-  var fpa = {};
+  var fpa = {
+    table_selector: '#permissions',
+    row_selector: 'tbody tr',
+    filter_selector: 'td.permission',
+    grouping_selector: 'td.module',
+    groups: {}
+  };
+  var indexed_rows = {};
   
   fpa.prepare = function (context) {
-    var module_id, new_module_id;
+    fpa.table = $(fpa.table_selector, context);
+    fpa.rows = fpa.table.find(fpa.row_selector);
     
-    fpa.table = $("#permissions", context);
-    fpa.rows = fpa.table.find('tbody tr');
-    fpa.perms = fpa.rows.find('td.permission');
-    
-    fpa.rows
-      .each(function () {
-        new_module_id = $(this).find("td.module").attr("id");
-        if (new_module_id) {
-          module_id = new_module_id;
-        }
-        else {
-          $(this).data('fpa_module', module_id);
-        }
-      });
+    var module_id = '';
+    fpa.rows.each(function () {
+      $this = $(this);
+      var new_module_id = $this.find(fpa.grouping_selector).text().toLowerCase();
+      if (new_module_id) {
+        fpa.groups[new_module_id] = this;
+        module_id = new_module_id;
+      }
+      $this.attr('fpa-module', module_id).attr('fpa-permission', $this.find(fpa.filter_selector).text().toLowerCase());
+    });
     $('<input id="fpa_search" type="text" class="form-text" />')
       .insertBefore(fpa.table.parent())
       .keypress(function (e) {
-        //prevent enter from submitting form
+        //prevent enter key from submitting form
         if (e.which == 13) {
           return false;
         }
@@ -29,7 +33,6 @@
       .keyup(function (e) {
         var $val = $(this).val();
         if ($val != '') {
-          fpa.rows.css('display', 'none');
           Drupal.settings.fpa.perm = $val;
           fpa.filter(window.document);
         }
@@ -48,22 +51,19 @@
   };
   
   fpa.filter = function () {
-    var perm_labels = {};
     if (typeof Drupal.settings.fpa.perm != 'undefined' && Drupal.settings.fpa.perm.length > 0) {
+      var perm_copy = Drupal.settings.fpa.perm.toLowerCase().split('@');
+      var perm_labels = [];
       fpa.rows.css('display', 'none');
-      fpa.perms
-        .filter(function () {
-          return $(this).text().toLowerCase().indexOf(Drupal.settings.fpa.perm.toLowerCase()) != -1;
-        }).parent()
-        .css('display', '')
-        .each(function () {
-          perm_labels[$(this).data('fpa_module')] = 1;
-        });
-      for (var i in perm_labels) {
-        $('#' + i).parent().css('display', '');
-      }
-      fpa.rows
-        .filter(':visible').removeClass('odd even')
+      var selector = 'tr';
+      selector += perm_copy[0] ? '[fpa-permission*="' + perm_copy[0] + '"]' : '';
+      selector += perm_copy[1] ? '[fpa-module*="' + perm_copy[1] + '"]' : '';
+      var items = fpa.rows.filter(selector).each(function (index, Element) {
+        perm_labels.push(fpa.groups[$(this).attr('fpa-module')]);
+      });
+      perm_labels = $.unique(perm_labels);
+      items.add(perm_labels).css('display', '')
+        .removeClass('odd even')
         .filter(":even").addClass('odd').end()
         .filter(":odd").addClass('even').end();
     }
@@ -80,11 +80,9 @@
     });
   };
   
-  Drupal.behaviors.fpa = {
-    attach: function (context) {
-      fpa.prepare(context);
-      fpa.filter();
-      fpa.modalframe(context);
-    }
-  };
+  Drupal.behaviors.fpa = {attach: function (context) {
+    fpa.prepare(context);
+    fpa.filter();
+    fpa.modalframe(context);
+  }};
 })(jQuery);
