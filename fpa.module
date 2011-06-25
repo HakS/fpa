@@ -91,7 +91,7 @@ function fpa_fieldset($permission, &$parent_item, $group = array()) {
 }
 
 function fpa_form_node_type_form_alter(&$form, &$form_state) {
-  if (user_access('administer permissions')) {
+  if (!empty($form['type']['#default_value']) && user_access('administer permissions')) {
     fpa_fieldset($form['#node_type']->type . ':', $form, array('#group' => 'additional_settings'));
   }
 }
