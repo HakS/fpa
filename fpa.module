@@ -102,7 +102,7 @@ function fpa_form_user_admin_permissions_alter(&$form, &$form_state) {
     $form['#submit'][] = '_fpa_modalframe_submit';
   }
   drupal_add_js(drupal_get_path('module', 'fpa') . '/js/fpa.js');
-  drupal_add_js(array('fpa' => array('perm' => isset($_GET['fpa_perm']) && $_GET['fpa_perm'] ? $_GET['fpa_perm'] : '')), array('type' => 'setting'));
+  drupal_add_js(array('fpa' => array('perm' => isset($_GET['fpa_perm']) && $_GET['fpa_perm'] ? check_plain($_GET['fpa_perm']) : '')), array('type' => 'setting'));
 }
 
 function _fpa_modalframe_submit() {
@@ -133,10 +133,12 @@ function _fpa_ctools($js = NULL) {
       $output = ctools_modal_form_wrapper('user_admin_permissions', $form_state);
       break;
   }
-    
-  if (empty($output)) {
-    $output = array(ctools_ajax_command_reload());
+  
+  if (!empty($form_state['executed'])) {
+    $output = array();
+    $output[] = ctools_ajax_command_reload();
   }
   
-  ctools_ajax_render($output);
+  echo ajax_render($output);
+  exit;
 }

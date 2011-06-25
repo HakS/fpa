@@ -22,6 +22,11 @@
       }
       $this.attr('fpa-module', module_id).attr('fpa-permission', $this.find(fpa.filter_selector).text().toLowerCase());
     });
+    
+    if (Drupal.settings.fpa.perm == '' && window.location.hash.indexOf('module-')) {
+      Drupal.settings.fpa.perm = '@' + window.location.hash.substring(8);
+    }
+    
     $('<input id="fpa_search" type="text" class="form-text" />')
       .insertBefore(fpa.table.parent())
       .keypress(function (e) {
