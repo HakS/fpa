@@ -27,7 +27,7 @@ function fpa_js_load($arg) {
   return 0;
 }
 
-function fpa_l($permission = '', $text = 'Manage Permissions', $options = array()) {
+function fpa_l($permission = '', $text = NULL, $options = array()) {
   
   // available modal modules in order of priority
   $supported_modules = array(
@@ -36,8 +36,13 @@ function fpa_l($permission = '', $text = 'Manage Permissions', $options = array(
     'modalframe',
   );
   
+  if (is_null($text)) {
+    $text = t('Manage Permissions');
+  }
+  
   // gets the most prefered modal method from the available methods
-  $method = array_shift(array_intersect($supported_modules, array_keys(module_list())));
+  $modules = array_intersect($supported_modules, array_keys(module_list()));
+  $method = array_shift($modules);
   
   $path = 'fpa_modal/nojs/permissions';
   $attributes = array();
@@ -60,7 +65,7 @@ function fpa_l($permission = '', $text = 'Manage Permissions', $options = array(
       $attributes['class'] = 'fpa_modalframe';
       break;
     default:
-      //$path = 'admin/people/permissions';
+      $path = 'admin/people/permissions';
       $attributes['target'] = '_blank';
       $query['fpa_method'] = '_blank';
       break;
@@ -68,7 +73,7 @@ function fpa_l($permission = '', $text = 'Manage Permissions', $options = array(
   
   $options = array_merge_recursive(array('query' => $query, 'attributes' => $attributes), $options);
   
-  return l(t($text), $path, $options);
+  return l($text, $path, $options);
 }
 
 function fpa_fieldset($permission, &$parent_item, $group = array()) {
@@ -101,7 +106,9 @@ function fpa_form_user_admin_permissions_alter(&$form, &$form_state) {
     modalframe_child_js();
     $form['#submit'][] = '_fpa_modalframe_submit';
   }
-  drupal_add_js(drupal_get_path('module', 'fpa') . '/js/fpa.js');
+  $fpa_module_path = drupal_get_path('module', 'fpa');
+  drupal_add_css($fpa_module_path .'/css/fpa.css');
+  drupal_add_js($fpa_module_path .'/js/fpa.js');
   drupal_add_js(array('fpa' => array('perm' => isset($_GET['fpa_perm']) && $_GET['fpa_perm'] ? check_plain($_GET['fpa_perm']) : '')), array('type' => 'setting'));
 }
 
