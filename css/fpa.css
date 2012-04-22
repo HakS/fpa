@@ -18,6 +18,10 @@
   display:block;
 }
 
+#user-admin-permissions.ctools-use-modal-processed .compact-link {
+  display:none;
+}
+
 #user-admin-permissions .fpa-left-section {
   background-color: #F6F6F6;
   border: 1px solid #D6DBDE;

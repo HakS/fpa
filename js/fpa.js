@@ -75,6 +75,9 @@
   
   fpa.prepare = function (context) {
     fpa.dom.form = $(fpa.selector.form, context);
+    if (fpa.dom.form.length == 0) {
+      return;
+    }
     fpa.dom.table = fpa.dom.form.find(fpa.selector.table);
     fpa.dom.section_right = fpa.dom.table.wrap('<div class="fpa-right-section" />').parent();
     fpa.dom.module_list = $('<ul />').insertBefore(fpa.dom.section_right).wrap('<div class="fpa-left-section" />');
@@ -107,7 +110,7 @@
       fpa.dom.role_style = $('<style type="text/css" />').prependTo(fpa.dom.section_right);
       
       // Put the "Save Permissions" button at the top and bottom.
-      $(fpa.selector.form + ' #edit-submit[name="op"]').remove()
+      fpa.dom.form.find('input[type="submit"][name="op"]').remove()
         .clone().insertAfter(fpa.dom.module_list)
         .clone().insertAfter(fpa.dom.table);
         
@@ -146,16 +149,20 @@
           var selector_array = [];
           var role_style_code = fpa.selector.table + ' .checkbox{display:none;}';
           for (i in values) {
-            selector_array.push(fpa.selector.table + ' .checkbox[title^="' + values[i] + ' :"]');
+            selector_array.push(fpa.selector.table + ' .checkbox[title^="' + values[i] + '"]');
           }
           role_style_code += selector_array.join(',') + '{display: table-cell;}';
           
           fpa.dom.role_style[0].innerHTML = role_style_code;
         });
-        
+      
+      fpa.dom.rows = fpa.dom.table.find(fpa.selector.row);
+      
       var roles = fpa.dom.table.find('thead th.checkbox').each(function () {
         $this = $(this);
-        $this.attr('title', $this.text() + ' :'); // set title to match cell title format for filtering
+        var role_text = $this.text();
+        var index = $this.attr('title', role_text).index() + 1;
+        fpa.dom.rows.find('td:nth-child(' + index + ')').attr('title', role_text);
         $('<option />')
           .appendTo(roles_select)
           .attr('value', $this.text())
@@ -163,8 +170,6 @@
           .text($this.text());
       });
       
-      
-      fpa.dom.rows = fpa.dom.table.find(fpa.selector.row);
       var module_id = '';
       var $module_row;
       
@@ -180,14 +185,20 @@
         }
         var perm = $this.find(fpa.selector.filter).clone();
         perm.find('div.description').remove();
-        var permission = fpa.classify(perm.text());
+        var permission = fpa.classify($.trim(perm.text()));
         $this.attr('fpa-module', module_id).attr('fpa-permission', permission);
         $module_row.attr('fpa-permission', $module_row.attr('fpa-permission') + ' ' + permission);
       });
       
+      if (Drupal.settings.fpa.perm == '' && window.location.hash.indexOf('module-') > -1) {
+        fpa.dom.filter.val('@' + window.location.hash.substring(8));
+        fpa.filter('=');
+      }
+      
       fpa.filter();
       fpa.dom.form.addClass('show');
       fpa.dom.filter.focus();
+      
     });
   };
   
