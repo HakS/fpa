@@ -1,3 +1,4 @@
 name = "Fast Permissions Administration"
 description = "Provides quick access to a content type's or field's permissions."
 core = 7.x
+package = Administration
