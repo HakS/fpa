@@ -66,6 +66,10 @@
   visibility: hidden;
 }
 
+#user-admin-permissions .fpa-left-section .form-submit {
+  margin: 1em auto;
+}
+
 #user-admin-permissions .fpa-right-section {
   margin-left: 151px;
   border: 1px solid #D6DBDE;

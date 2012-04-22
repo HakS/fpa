@@ -107,7 +107,7 @@
       fpa.dom.role_style = $('<style type="text/css" />').prependTo(fpa.dom.section_right);
       
       // Put the "Save Permissions" button at the top and bottom.
-      $('#user-admin-perm #edit-submit[name="op"]').remove()
+      $(fpa.selector.form + ' #edit-submit[name="op"]').remove()
         .clone().insertAfter(fpa.dom.module_list)
         .clone().insertAfter(fpa.dom.table);
         
