@@ -1,220 +1,266 @@
-(function ($) {
+
+/**
+ * @file
+ * JS functionality that creates dynamic CSS which hides permission rows.
+ */
+
+// Wrapper normalizes 'jQuery' to '$'.
+;(function ($) {
+  "use strict";
+  
   var fpa = {
     selector : {
       form: '#user-admin-permissions',
-      table : '#permissions',
-      row : 'tbody tr',
-      filter : 'td.permission',
-      grouping : 'td.module'
+      table : '#permissions'
     },
-    dom : {
-      table : '', // jquery object for entire permissions table
-      rows : '', // jquery object containing just the rows
-      perm_style : '', // jquery object containing permissions style
-      role_style : '', // jquery object containing roles style
-      section_left: '',
-      section_right: ''
-    },
-    search:''
+    dom : {},
+    attr: {
+      permission: '',
+      module: ''
+    }
   };
   
   /**
-   * Kick a function to the Back Of The Line.
-   * 
-   * Anything that is botl'd will run after other attach events, like sticky table headers.
+   * @see https://api.drupal.org/api/drupal/includes!common.inc/function/drupal_clean_css_identifier/7
    */
-  fpa.botl = function (func) {
-    setTimeout(function () {
-      func();
-    }, 0);
+  var drupal_clean_css_identifier = function (str) {
+    
+    return str
+    // replace ' ', '_', '/', '[' with '-'
+    .replace(/[ _\/\[]/g, '-')
+    // replace ']' with ''
+    .replace(/\]/g, '')
+    // Valid characters in a CSS identifier are:
+    // - the hyphen (U+002D)
+    // - a-z (U+0030 - U+0039)
+    // - A-Z (U+0041 - U+005A)
+    // - the underscore (U+005F)
+    // - 0-9 (U+0061 - U+007A)
+    // - ISO 10646 characters U+00A1 and higher
+    // We strip out any character not in the above list.
+    .replace(/[^\u002D\u0030-\u0039\u0041-\u005A\u005F\u0061-\u007A\u00A1-\uFFFF]/, '');
   };
   
   /**
    * Changes a string into a safe single css class.
+   * 
+   * @see https://api.drupal.org/api/drupal/includes!common.inc/function/drupal_html_class/7
    */
-  fpa.classify = function (str) {
-    return str.toLowerCase().replace(/ /ig, '-');
+  var drupal_html_class = function (str) {
+    
+    return drupal_clean_css_identifier(str.toLowerCase());
   };
   
   /**
    * Callback for click events on module list.
    */
-  fpa.filter_module = function () {
-    var $this = $(this);
-    $('div.fpa-left-section ul li').removeClass('active');
-    $this.parent().addClass('active');
+  fpa.filter_module = function (e) {
+    e.preventDefault();
+    e.stopPropagation();
     
-    var current_perm = fpa.dom.filter.val().split('@');
-    current_perm[1] = $this.attr('title');
-    fpa.dom.filter.val(current_perm.join('@').replace(/@$/ig, '')); // remove trailing @ as that means no module; clean 'All' filter value
-    fpa.filter('=');
+    
+    var $this = $(this);
+    
+    var current_perm = fpa.dom.filter.val().replace(/(@.*)/, ''); // remove current module filter string.
+    
+    current_perm += $this.attr(fpa.attr.module) != '' ? '@' + $this.find('a[href]').text() : '';
+    
+    fpa.dom.filter.val(current_perm); // remove trailing @ as that means no module; clean 'All' filter value
+    
+    // ~= matches exactly one whitespace separated word in attribute.
+    fpa.filter('~=');
   };
+  
+  var table_base_selector = '.fpa-table-wrapper tr';
+  var list_counter_selector = '.fpa-left-section .item-list li span';
+  var list_base_selector = '.fpa-left-section .item-list li';
+  
+  var module_active_style = '{margin-right:-1px; background-color: white; border-right: solid 1px transparent;}';
   
   fpa.filter = function (module_match) {
-    module_match = module_match || '*=';
-    perm = fpa.dom.filter.val();
-    fpa.botl(function () {
-      if (typeof perm != 'undefined' && ['', '@'].indexOf(perm) == -1) {
-        var perm_copy = fpa.classify(perm).split('@');
-        var selector = fpa.selector.table + ' ' + fpa.selector.row;
-        
-        var perm_style_code = selector + '[fpa-module]{display:none;}';
-        
-        if (perm_copy[0]) selector += '[fpa-permission*="' + perm_copy[0] + '"]';
-        if (perm_copy[1]) selector += '[fpa-module' + module_match + '"' + perm_copy[1] + '"]';
-        
-        perm_style_code += selector + '{display: table-row;}';
-        
-        fpa.dom.perm_style[0].innerHTML = perm_style_code;
+    
+    module_match = typeof module_match !== 'undefined' ? module_match : '*=';
+    var perm = fpa.dom.filter.val();
+    
+    // By default highlight 'All modules' item.
+    var perm_style_code = list_base_selector + '[' + fpa.attr.module + '=""]' + module_active_style;
+    
+    // Ensure that 'perm' is filter-able value.
+    if (['', '@'].indexOf(perm) == -1) {
+      var matches = perm.match(/([^@]*)@?(.*)/i);
+      matches.shift(); // Remove whole match item.
+      var perm_copy = $.map(matches, drupal_html_class);
+      var filter_selector = [
+        '', // 0 => permission
+        ''  // 1 => module
+      ];
+      
+      // Set defaults of no matches
+      perm_style_code += table_base_selector + '[' + fpa.attr.module + ']{display: none;}';
+      if (perm_copy[0].length > 0) {
+        perm_style_code += list_counter_selector + '[' + fpa.attr.permission + ']{display: none;}';
       }
-      else {
-        fpa.dom.perm_style[0].innerHTML = '';
+      if (perm_copy[1].length > 0) {
+        perm_style_code += list_base_selector + '[' + fpa.attr.module + ']{background-color: inherit;}';
       }
-    });
+      
+      // Permission filter present
+      if (perm_copy[0].length > 0) {
+        filter_selector[0] = '[' + fpa.attr.permission + '*="' + perm_copy[0] + '"]';
+      }
+      
+      // Module filter present
+      if (perm_copy[1].length > 0) {
+        filter_selector[1] = '[' + fpa.attr.module + module_match + '"' + perm_copy[1] + '"]';
+      }
+      
+      // Show matching permissions table rows.
+      perm_style_code += table_base_selector + filter_selector.join('') + '{display: table-row;}';
+      // Change visibility of counter span's.
+      perm_style_code += list_counter_selector + filter_selector[0] + '{display: inline;}';
+      // Highlight matching items in the module list.
+      if (filter_selector[1].length > 0) {
+        perm_style_code += list_base_selector + filter_selector[1] + module_active_style;
+      }
+    }
+    
+    // .html() does not work on <style /> elements.
+    fpa.dom.perm_style.innerHTML = perm_style_code;
   };
+  
+  // Even handler for role selection.
+  fpa.filter_roles = function (e) {
+    
+    var values = $(this).val();
+    var selector_array = [];
+    var role_style_code = '.fpa-table-wrapper .checkbox{display: none !important;}';
+    
+    for (var i in values) {
+      selector_array.push('.fpa-table-wrapper .checkbox[title="' + values[i] + '"]');
+    }
+    role_style_code += selector_array.join(',') + '{display: table-cell !important;}';
+    
+    // Ensure right border on last visible role.
+    role_style_code += selector_array.pop() + '{border-right: 1px solid #bebfb9;}';
+    
+    fpa.dom.role_style.innerHTML = role_style_code;
+  };
+  
+  fpa.select = function (context) {
+    
+    fpa.dom = {};
+    
+    fpa.dom.context = $(context);
+    
+    fpa.dom.form = fpa.dom.context.find(fpa.selector.form);
+    
+    // Prevent anything else from running if the form is not found.
+    if (fpa.dom.form.length == 0) {
+      return false;
+    }
+    
+    fpa.dom.wrapper = fpa.dom.form.find('.fpa-wrapper');
+    
+    // Raw element since $().html(); does not work for <style /> elements.
+    fpa.dom.perm_style = fpa.dom.wrapper.find('.fpa-perm-styles style').get(0);
+    fpa.dom.role_style = fpa.dom.wrapper.find('.fpa-role-styles style').get(0);
+    
+    fpa.dom.section_left = fpa.dom.wrapper.find('.fpa-left-section');
+    fpa.dom.section_right = fpa.dom.wrapper.find('.fpa-right-section');
+    
+    fpa.dom.table = fpa.dom.section_right.find(fpa.selector.table);
+    
+    fpa.dom.module_list = fpa.dom.section_left.find('ul');
+    fpa.dom.all_modules = fpa.dom.module_list.find('.first');
+    
+    
+    fpa.dom.filter_form = fpa.dom.section_right.find('.fpa-filter-form');
+    fpa.dom.filter = fpa.dom.filter_form.find('input[type="text"]');
+    fpa.dom.clear_search = fpa.dom.filter_form.find('.fpa-clear-search');
+    fpa.dom.role_select = fpa.dom.filter_form.find('select');
+    
+    return true;
+  };
+  
+  var timeout = null;
   
   fpa.prepare = function (context) {
-    fpa.dom.form = $(fpa.selector.form, context);
-    if (fpa.dom.form.length == 0) {
-      return;
-    }
-    fpa.dom.table = fpa.dom.form.find(fpa.selector.table);
-    fpa.dom.section_right = fpa.dom.table.wrap('<div class="fpa-right-section" />').parent();
-    fpa.dom.module_list = $('<ul />').insertBefore(fpa.dom.section_right).wrap('<div class="fpa-left-section" />');
-
-    // create module list
     
-    fpa.dom.all_modules = $('<div />')
-      .appendTo(fpa.dom.module_list)
-      .wrap('<li class="active" />')
-      .text('All modules')
-      .attr('title', '')
-      .click(fpa.filter_module);
+    fpa.dom.section_left.delegate('li[' + fpa.attr.module + ']', 'click', fpa.filter_module);
     
-    fpa.dom.table.find(fpa.selector.grouping).each(function () {
-      var module_id = $(this).text();
-      // Add new item to module list.
-      $('<div />')
-        .appendTo(fpa.dom.module_list)
-        .wrap('<li />')
-        .text(module_id.replace(/ module$/ig, ''))
-        .attr('title', module_id)
-        .attr('fpa-module', fpa.classify(module_id))
-        .click(fpa.filter_module);
+    fpa.dom.filter
+    .val(Drupal.settings.fpa.filter_value)
+    .keyup(function _fpa_filter(e) {
+      clearTimeout(timeout);
+      timeout = setTimeout(function () {
+        fpa.filter();
+      }, 0);
     });
     
-    // tag rows with required classes
-    fpa.botl(function () {
-      fpa.dom.filter_form = $('<div class="fpa-filter-form" />').prependTo(fpa.dom.section_right);
-      fpa.dom.perm_style = $('<style type="text/css" />').prependTo(fpa.dom.section_right);
-      fpa.dom.role_style = $('<style type="text/css" />').prependTo(fpa.dom.section_right);
-      
-      // Put the "Save Permissions" button at the top and bottom.
-      fpa.dom.form.find('input[type="submit"][name="op"]').remove()
-        .clone().insertAfter(fpa.dom.module_list)
-        .clone().insertAfter(fpa.dom.table);
-        
-      fpa.dom.filter = $('<input id="fpa_filter" type="text" class="form-text" placeholder="permission@module" />')
-        .appendTo(fpa.dom.filter_form)
-        .keypress(function (e) {
-          //prevent enter key from submitting form
-          if (e.which == 13) {
-            return false;
-          }
-        })
-        .keyup(function (e) {
-          fpa.filter();
-        })
-        .wrap('<div id="fpa-filter-perm" class="form-item" />')
-        .before('<label for="fpa_filter">Filter:</label>')
-        .after('<div class="description">Enter in the format of permission@module;<br /> E.g. admin@system will show only permissions with<br />the text "admin" in modules with the text "system".</div>')
-        .val(Drupal.settings.fpa.perm);
-        
-      $('<button class="clear-search">Clear Filter</button>')
-        .insertAfter(fpa.dom.filter)
-        .click(function (e) {
-          e.preventDefault();
-          fpa.dom.filter.val('');
-          fpa.filter();
-          fpa.dom.all_modules.click();
-        });
-        
-      var roles_select = $('<select multiple="multiple" size=5 />')
-        .appendTo(fpa.dom.filter_form)
-        .wrap('<div id="fpa-filter-role" class="form-item" />')
-        .before('<label for="fpa_filter">Roles:</label>')
-        .after('<div class="description">Select which roles to display.<br />Ctrl+click to select multiple.</div>')
-        .change(function () {
-          var values = $(this).val();
-          var selector_array = [];
-          var role_style_code = fpa.selector.table + ' .checkbox{display:none;}';
-          for (i in values) {
-            selector_array.push(fpa.selector.table + ' .checkbox[title^="' + values[i] + '"]');
-          }
-          role_style_code += selector_array.join(',') + '{display: table-cell;}';
-          
-          fpa.dom.role_style[0].innerHTML = role_style_code;
-        });
-      
-      fpa.dom.rows = fpa.dom.table.find(fpa.selector.row);
-      
-      var roles = fpa.dom.table.find('thead th.checkbox').each(function () {
-        $this = $(this);
-        var role_text = $this.text();
-        var index = $this.attr('title', role_text).index() + 1;
-        fpa.dom.rows.find('td:nth-child(' + index + ')').attr('title', role_text);
-        $('<option />')
-          .appendTo(roles_select)
-          .attr('value', $this.text())
-          .attr('selected', 'selected')
-          .text($this.text());
-      });
-      
-      var module_id = '';
-      var $module_row;
-      
-      // iterate over the rows
-      fpa.dom.rows.each(function () {
-        var $this = $(this);
-        
-        // Is this a module row?
-        var new_module_id = $this.find(fpa.selector.grouping).text();
-        if (new_module_id != '') {
-          $module_row = $this.addClass('module');
-          module_id = fpa.classify(new_module_id);
-        }
-        var perm = $this.find(fpa.selector.filter).clone();
-        perm.find('div.description').remove();
-        var permission = fpa.classify($.trim(perm.text()));
-        $this.attr('fpa-module', module_id).attr('fpa-permission', permission);
-        $module_row.attr('fpa-permission', $module_row.attr('fpa-permission') + ' ' + permission);
-      });
-      
-      if (Drupal.settings.fpa.perm == '' && window.location.hash.indexOf('module-') > -1) {
-        fpa.dom.filter.val('@' + window.location.hash.substring(8));
-        fpa.filter('=');
+    fpa.dom.form
+    // Prevent Enter/Return from submitting form.
+    .delegate(':input', 'keypress', function _prevent_form_submission(e) {
+      if (e.which == 13) {
+        e.preventDefault();
+        e.stopPropagation();
       }
-      
-      fpa.filter();
-      fpa.dom.form.addClass('show');
-      fpa.dom.filter.focus();
-      
     });
-  };
-  
-  fpa.modalframe = function (context) {
-    $('a.fpa_modalframe', context).click(function (e) {
-      e.preventDefault();
+    
+    // Handle links to sections on permission admin page.
+    fpa.dom.form
+    .delegate('a[href*="admin/people/permissions#"]', 'click', function (e) {
       e.stopPropagation();
-      Drupal.modalFrame.open({
-        url: $(this).attr('href'),
-        draggable: false
-      });
+      
+      fpa.dom.module_list.find('li[' + fpa.attr.module + '~="' + drupal_html_class(this.hash.substring(8)) + '"]').click();
     });
+    
+    // If there is a module anchor in the url, filter for that module.
+    if (Drupal.settings.fpa.filter_value == '' && window.location.hash.indexOf('module-') > -1) {
+      
+      fpa.dom.module_list.find('li[' + fpa.attr.module + '~="' + drupal_html_class(window.location.hash.substring(8)) + '"]').click();
+    }
+    else {
+      fpa.filter();
+    }
+    
+    // Move submission button to below module list and bottom of table.
+    fpa.dom.form.find('input[type="submit"][name="op"]').remove()
+    .clone().insertAfter(fpa.dom.module_list)
+    .clone().insertAfter(fpa.dom.table);
+      
+    // Clear contents of search field and reset visible permissions.
+    fpa.dom.clear_search
+    .click(function (e) {
+      e.preventDefault();
+      fpa.dom.filter.val('').triggerHandler('keyup');
+    });
+    
+    
+    // Change visible roles.
+    fpa.dom.role_select
+    .change(fpa.filter_roles);
+    
+    // Fix table sticky table headers width due to changes in visible roles.
+    $(window).bind('scroll', function _fpa_fix_tableheader(e) {
+      $(this).triggerHandler('resize.drupal-tableheader');
+    });
+    
+    // Focus on element takes long time, bump after normal execution.
+    setTimeout(function _fpa_filter_focus() {
+      fpa.dom.filter.focus();
+    }, 0);
+    
   };
   
-  Drupal.behaviors.fpa = {attach: function (context) {
-    fpa.prepare(context);
-    fpa.modalframe(context);
-  }};
+  Drupal.behaviors.fpa = {
+    attach: function (context) {
+      
+      fpa.attr.permission = Drupal.settings.fpa.attr.permission;
+      fpa.attr.module = Drupal.settings.fpa.attr.module;
+      
+      if (fpa.select(context)) {
+        fpa.prepare(context);
+      }
+    }
+  };
 })(jQuery);
