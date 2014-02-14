@@ -1,95 +1,163 @@
-#user-admin-permissions {
-  background-repeat: no-repeat;
-  background-position: center -18px;
-  background-image: url('data:image/gif;base64,R0lGODlhDwAoAMQAAAAAAAhzvQx7vRh7xhyExjWQykaczlqi02uv2Iu/4bW1taDO57XW7729vb3e78bGxs7OztbW1t7e3sri89bn997v9+fn5+fv9+f3/+/v7+/3//f39/f3//f//////wAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFBgAAACwAAAAADwAoAAAFxiAgApkUWduoAhukvC+UqlujNFD0vI2nuo8ZyRYZZW5C0VExkyiKK8DOIoooJFGAFQtwQldTJXK1FAKFGSLNpsjtbj6aC/ZMqkone3bP7/v/gIGCfhQJCAsVexUGAY2NBxorFQIBAgQBl5gcKowFFQkBCROXCCMUlRceoAkeE42RAAsBCB6qobWMDCIIt7asHrwJIqC0HgwHDLgBugCnAqm1ta4BsACdFdETA7Mqk40GCIyaKxfijgjVKxQLh4mD7/Dx8vIhAAAh+QQFBgAAACwAABQADQANAAAFRyAgAtOSANqoriI3XgQQFEchFunqcUQwvCpPImBwiC6rikxpc5wQooNKulgApIALwjVyTGQskcAzinVZ5qsNsA5HkSvkaRUCACH5BAUGAAAALAAAFAANAA0AAAU/ICAC11iNY4mKKnCKxsqtoudNwjgBweg5hZ7AIzqwjAECDSVI0BAoVYEFyK0cvFZhJ+KmRtOYSGNazlZe8igEACH5BAUGAAAALAAAFAANAA0AAAVIICACVIKMKFClooYKAIwYIsGmtkjFqOdNgIALcAI4EsiEjXFKiJyBaACARDEO2MNydwMChqLVTQUDGIoAAmd0YSHAo91JLAoBACH5BAUGAAAALAAAFAANAA0AAAVJICAC05IA2qiuIjdeBBAUx1ikbH7lgCPuqgvi4vEUeieEqCZIeGqLBaAG2AUChKNjIlM5CgGAwDOKjRyClXl6BLR5U2AQcFqFAAAh+QQFBgAAACwAABQADQANAAAFQCAgAtdYjWOJiipwigZQjNy6DuMEBLYueKIDqgaI2UQJ4AohqvAqShJAMEoEDI5dq6DjEHio7UpjOhJROhF5FAIAIfkEBQYAAAAsAAAUAA0ADQAABUUgIAIUgIwoUKWihgoAjBgiwaa2WMJ34JoiR8KBYpwSIuToqEwCEh4AjVEaJQLQSQtVuSYmAy6PEMgROKMLC/FDlU6rUQgAIfkEBQYAAAAsAAAUAA0ADQAABUYgIAITkADaqK4iN14EEBTHWKRsfuWAI+6qCwJX6J0QohoSUFssmL2AACdylAKAQmDhGQm6osHM4/GtYtlDMcsbHYBBEysEACH5BAUGAAAALAAAFAANAA0AAAVBICAC11iNY4mKKnCKBlCM3LoO4wQEti54ooPoVAPEUJwEzwYj8BCjGUkUMFCAAMeuRZhgdagWbKQxMYsoMKA8CgEAIfkEBQYAAAAsAAAUAA0ADQAABUkgIAJUgowoUKWihgoAjBgiwaa2SMU3EGgJAOFAPDBQjFNgKQoCTs5CYppwiGiMneDi8YwmrVFh1avAAIZTjTO6sBCu1O5EFoUAACH5BAUGAAAALAAAFAANAA0AAAVIICAC05IA2qiuIjdeBBAUx1ikY8yKlxwYlJGDtwAYCIEAAlcAOE4IzgmAENWKgIPHU4mqHBPZDiDw5L4sXbYJYI+zvVVvqgoBACH5BAUGAAAALAAAFAANAA0AAAVBICAC11iNY4mKKnCixcitQSwO48QWwSLqAo/o4HEABCPDyuM5rFAIFkAjspWQK2OgVdD9VlyAUkQVvVazlXeKCgEAOw==');
-  height: 18px;
-}
-
-#user-admin-permissions.show {
-  background-image: none;
-  height: auto;
-}
-
-#user-admin-permissions > div {
-  display: none;
-}
-
-#user-admin-permissions.show > div {
-  display:block;
+/**
+ *   Prevent page width change when scroll is required.
+ *   Helps reduce screen redraws.
+ */
+body.page-admin-people-permissions {
+  overflow-y: scroll;
 }
 
 #user-admin-permissions.ctools-use-modal-processed .compact-link {
   display:none;
 }
 
-#user-admin-permissions .fpa-left-section {
-  background-color: #F6F6F6;
-  border: 1px solid #D6DBDE;
-  float: left;
-  margin-right: -1px;
-  text-align: center;
-  width: 150px;
+#user-admin-permissions .form-submit {
+  margin: 1em;
 }
 
-#user-admin-permissions .fpa-left-section ul {
+.fpa-wrapper {
+  display: table;
+  width: 100%;
+}
+
+/**
+ *   Override admin_menu's "Collapse module groups on the Permissions page".
+ */
+.fpa-wrapper .element-hidden {
+  display: table-row;
+}
+
+.fpa-left-section {
+  display: table-cell;
+  background-color: #F6F6F6;
+  border: 1px solid #D6DBDE;
+  width: 1px; /* Keep column as small as possible. Table cells automatically push wider. */
+}
+
+.fpa-left-section .item-list ul {
+  background-color: #EFEFEF;
   list-style: none;
   margin:0;
   padding: 0;
   text-align: left;
 }
 
-#user-admin-permissions .fpa-left-section ul li {
-  background: #EFEFEF;
+.fpa-left-section .item-list li {
+  background-color: inherit;
   border-bottom: 1px solid #D6DBDE;
   cursor: pointer;
   font-size: 90%;
   line-height: 100%;
   margin: 0;
-  overflow: hidden;
   padding: 0;
-  text-overflow: ellipsis;
+  list-style: none;
   white-space: nowrap;
 }
 
-#user-admin-permissions .fpa-left-section ul li.active {
-  background: white;
+.fpa-left-section .item-list li[fpa-module=""] {
   margin-right: -1px;
-  position: relative;
-  width: 151px;
+  background-color: white;
+  border-right: solid 1px transparent;
 }
 
-#user-admin-permissions .fpa-left-section ul li div {
+.fpa-left-section .item-list li > div {
+  display: table;
+  width: 100%;
+}
+
+.fpa-left-section .item-list li a,
+.fpa-left-section .item-list li .fpa-perm-total {
+  display: table-cell;
   padding: 0.5em;
 }
 
-#user-admin-permissions .fpa-left-section ul li div:after {
-  content: ".";
-  display: block;
-  height: 0;
-  clear: both;
-  visibility: hidden;
+.fpa-left-section .item-list li .fpa-perm-total {
+  min-width: 6em;
 }
 
-#user-admin-permissions .fpa-left-section .form-submit {
-  margin: 1em auto;
+.fpa-left-section .item-list li a {
+  text-decoration: none;
+  color: inherit;
 }
 
-#user-admin-permissions .fpa-right-section {
-  margin-left: 151px;
+.fpa-left-section .item-list li .fpa-perm-total {
+  text-align: right;
+}
+
+.fpa-right-section {
+  background-color: white;
+  display: table-cell;
   border: 1px solid #D6DBDE;
+  border-left-width: 0;
 }
 
-#user-admin-permissions .fpa-right-section .fpa-filter-form .form-item {
+.fpa-filter-form .form-item {
   display: inline-block;
   padding: 3px 10px;
   vertical-align: top;
 }
 
-#user-admin-permissions .fpa-right-section .fpa-filter-form .clear-search {
+.fpa-filter-form .clear-search {
   cursor: pointer;
   display: inline-block;
 }
 
-#user-admin-permissions .fpa-right-section .form-submit {
-  margin-left: 0.5em;
+.fpa-right-section .fpa-table-wrapper {
+  padding: 10px;
+}
+
+/**
+ *   CTools attempts some styling to compact forms, looks bad with FPA.
+ */
+div.ctools-modal-content .fpa-wrapper .form-item label {
+  float: none;
+  width: auto;
+}
+
+/*
+ * Rubik has some aggressive styling which makes FPA look poor, reset it here.
+ */
+.fpa-wrapper .block,
+.fpa-wrapper .item-list,
+.fpa-wrapper .help-items ul,
+.fpa-wrapper .form-item,
+.fpa-wrapper .confirmation ul,
+.fpa-wrapper .admin-list,
+.fpa-wrapper .node-type-list,
+.fpa-wrapper .admin-panel {
+  border-width: 0;
+}
+
+/**
+ *   Styling for matching permissions counter.
+ */
+.fpa-left-section li[fpa-module] {
+  counter-reset: fpa-module-permissions;
+}
+
+.fpa-perm-counter {
+  display: inline;
+  counter-increment: fpa-module-permissions;
+}
+
+.fpa-perm-total:before {
+  content: counter(fpa-module-permissions);
+}
+
+.fpa-perm-total:after {
+  content: " of " attr(fpa-total);
+}
+
+/*
+ * Hide counter on "All modules" item.
+ */
+.fpa-left-section li.first .fpa-perm-total {
+  /*display: none;*/
+}
+
+.fpa-system-name {
+  display: none;
+}
+
+.fpa-show-system-name .fpa-system-name {
+  display: table-cell;
 }
