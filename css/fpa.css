@@ -10,8 +10,19 @@ body.page-admin-people-permissions {
   display:none;
 }
 
+.fpa-container tr.admin-menu-tweak-permissions-processed {
+  cursor: default;
+}
+
 #user-admin-permissions .form-submit {
   margin: 1em;
+}
+
+/**
+ *   Prevent vertical jitter of dummy checkboxes.
+ */
+#user-admin-permissions .dummy-checkbox {
+  vertical-align: middle;
 }
 
 .fpa-wrapper {
@@ -22,7 +33,7 @@ body.page-admin-people-permissions {
 /**
  *   Override admin_menu's "Collapse module groups on the Permissions page".
  */
-.fpa-wrapper .element-hidden {
+.fpa-wrapper tr.element-hidden {
   display: table-row;
 }
 
@@ -51,12 +62,6 @@ body.page-admin-people-permissions {
   padding: 0;
   list-style: none;
   white-space: nowrap;
-}
-
-.fpa-left-section .item-list li[fpa-module=""] {
-  margin-right: -1px;
-  background-color: white;
-  border-right: solid 1px transparent;
 }
 
 .fpa-left-section .item-list li > div {
@@ -154,10 +159,99 @@ div.ctools-modal-content .fpa-wrapper .form-item label {
   /*display: none;*/
 }
 
+.fpa-toggle-container {
+  padding: 0.5em;
+}
+
+.fpa-toggle-container a {
+  margin: 0.5em;
+}
+
 .fpa-system-name {
+  white-space: nowrap;
+}
+
+.fpa-hide-system-names .fpa-system-name {
   display: none;
 }
 
-.fpa-show-system-name .fpa-system-name {
+.fpa-hide-descriptions table#permissions .description {
+  display: none;
+}
+
+/**
+ *   Styling for injected checkboxes.
+ */
+.fpa-table-wrapper .module input[type="checkbox"] {
+  display: block;
+  margin: 0 auto;
+}
+
+.fpa-table-wrapper th.checkbox {
+  vertical-align: bottom;
+}
+
+.fpa-table-wrapper th input[type="checkbox"] {
+  display: block;
+  margin: 0.5em auto;
+}
+
+td.permission-toggle {
+  width: 2em;
+}
+
+td.permission-toggle input[type="checkbox"] {
+  vertical-align: middle;
+}
+
+
+.fpa-hide-descriptions a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:first-child,
+a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:last-child {
+  display: none;
+}
+
+a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:first-child,
+.fpa-hide-descriptions a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:last-child {
+  display: inline;
+}
+
+
+.fpa-hide-system-names a[fpa-toggle-class="fpa-hide-system-names"] .fpa-toggle-link:first-child,
+a[fpa-toggle-class="fpa-hide-system-names"] .fpa-toggle-link:last-child {
+  display: none;
+}
+
+a[fpa-toggle-class="fpa-hide-system-names"] .fpa-toggle-link:first-child,
+.fpa-hide-system-names a[fpa-toggle-class="fpa-hide-system-names"] .fpa-toggle-link:last-child {
+  display: inline;
+}
+
+#user-admin-permissions .form-submit.fpa-clear-search {
+  margin: 0;
+}
+
+.fpa-mobile input[type="checkbox"] {
+  width: 4em;
+  height: 4em;
+}
+
+.fpa-permission-container {
+  display: table;
+  width: 100%;
+}
+
+.fpa-row-toggle-container {
   display: table-cell;
+  vertical-align: middle;
+  width: 2em;
+  text-align: center;
+}
+
+td.checkbox {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
