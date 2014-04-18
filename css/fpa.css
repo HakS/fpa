@@ -37,10 +37,15 @@ body.page-admin-people-permissions {
   display: table-row;
 }
 
-.fpa-left-section {
+.fpa-left-section,
+.fpa-right-section {
   display: table-cell;
-  background-color: #F6F6F6;
   border: 1px solid #D6DBDE;
+  vertical-align: top;
+}
+
+.fpa-left-section {
+  background-color: #F6F6F6;
   width: 1px; /* Keep column as small as possible. Table cells automatically push wider. */
 }
 
@@ -90,8 +95,6 @@ body.page-admin-people-permissions {
 
 .fpa-right-section {
   background-color: white;
-  display: table-cell;
-  border: 1px solid #D6DBDE;
   border-left-width: 0;
 }
 
@@ -99,6 +102,7 @@ body.page-admin-people-permissions {
   display: inline-block;
   padding: 3px 10px;
   vertical-align: top;
+  float: none;
 }
 
 .fpa-filter-form .clear-search {
@@ -108,6 +112,13 @@ body.page-admin-people-permissions {
 
 .fpa-right-section .fpa-table-wrapper {
   padding: 10px;
+}
+
+/**
+ *   Module filter 2.x has a simple permissions filter. Hide this if FPA is enabled.
+ */
+.fpa-table-wrapper .module-filter-inputs-wrapper .form-item-module-filter-name {
+  display: none;
 }
 
 /**
@@ -196,15 +207,6 @@ div.ctools-modal-content .fpa-wrapper .form-item label {
   margin: 0.5em auto;
 }
 
-td.permission-toggle {
-  width: 2em;
-}
-
-td.permission-toggle input[type="checkbox"] {
-  vertical-align: middle;
-}
-
-
 .fpa-hide-descriptions a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:first-child,
 a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:last-child {
   display: none;
@@ -254,4 +256,55 @@ td.checkbox {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+#permissions td {
+  text-align: center;
+}
+
+#permissions td.permission,
+#permissions td.module {
+  text-align: left;
+}
+
+/**
+ * [checked] is HTML attribute. ':checked' selector is based on DOM property.
+ * 
+ * IE: Both :checked and box-shadow are only supported on IE9+, so <=IE8 will not see this feature at all.
+ */
+.fpa-table-wrapper td.checkbox input[type="checkbox"] {
+  box-shadow: none;
+}
+
+.fpa-table-wrapper td.checkbox input[type="checkbox"]:checked {
+  box-shadow: 0px 0px 10px 6px rgba(0, 255, 0, 0.5);
+  border-collapse: separate;
+}
+
+.fpa-table-wrapper td.checkbox input[type="checkbox"][checked] {
+  box-shadow: 0px 0px 10px 6px rgba(255, 0, 0, 0.5);
+  border-collapse: separate;
+}
+
+.fpa-table-wrapper td.checkbox input[type="checkbox"][checked]:checked {
+  box-shadow: none;
+}
+
+/**
+ * Hide aspects of FPA that depend on JS.
+ */
+.fpa-checkboxes-toggle {
+  visibility: hidden;
+}
+
+html.js .fpa-checkboxes-toggle {
+  visibility: inherit;
+}
+
+.fpa-filter-form {
+  display: none;
+}
+
+html.js .fpa-filter-form {
+  display: block;
 }

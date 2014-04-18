@@ -35,7 +35,7 @@ function theme_fpa_user_admin_permissions($variables) {
       'class' => array(
         'rid-1',
         'form-checkbox',
-        'fpa-row-toggle',
+        'fpa-checkboxes-toggle',
       ),
     ),
   );
@@ -48,7 +48,6 @@ function theme_fpa_user_admin_permissions($variables) {
       'class' => array(
         'fpa-permission-container',
       ),
-      'title' => t('Toggle visible checkboxes in this row.'),
     ),
     'description' => array(
       '#markup' => '',
@@ -56,11 +55,14 @@ function theme_fpa_user_admin_permissions($variables) {
     'checkbox_cell' => array(
       '#type' => 'container',
       '#attributes' => array(
-        'class' => 'fpa-row-toggle-container',
+        'class' => array(
+          'fpa-row-toggle-container',
+        ),
       ),
       'checkbox_form_item' => array(
         '#type' => 'container',
         '#attributes' => array(
+          'title' => t('Toggle visible checkboxes in this row.'),
           'class' => array(
             'form-item',
             'form-type-checkbox',
@@ -83,7 +85,12 @@ function theme_fpa_user_admin_permissions($variables) {
     ),
   );
   
-  $roles = user_roles();
+  // Prepare role names processed by drupal_html_class() ahead of time.
+  $roles_attr_values = array();
+  
+  foreach (element_children($form['checkboxes']) as $rid) {
+    $roles_attr_values[$rid] = drupal_html_class($form['role_names'][$rid]['#markup']);
+  }
   
   // Lists for wrapper.
   $modules = array();
@@ -155,9 +162,16 @@ function theme_fpa_user_admin_permissions($variables) {
     else {
       // Permission row.
       
+      $permission_system_name = '';
+      
+      // Might be empty if no modules are displayed in Permissions Filter module.
+      if (!empty($form['checkboxes'][$first_permission_index])) {
+        $permission_system_name = $form['checkboxes'][$first_permission_index][$key]['#return_value'];
+      }
+      
       // System name
       $row['data'][] = array(
-        'data' => $form['checkboxes'][$first_permission_index][$key]['#return_value'],
+        'data' => $permission_system_name,
         'class' => array('fpa-system-name permission'),
       );
       
@@ -166,6 +180,11 @@ function theme_fpa_user_admin_permissions($variables) {
       
       $label['description']['#markup'] = drupal_render($form['permission'][$key]);
       
+      // Permissions filter might cause no Roles to display.
+      if (count(element_children($form['checkboxes'])) == 0) {
+        unset($label['checkbox_cell']);
+      }
+      
       // Readable
       $row['data'][] = array(
         'data' => drupal_render($label),
@@ -173,8 +192,12 @@ function theme_fpa_user_admin_permissions($variables) {
       );
       
       foreach (element_children($form['checkboxes']) as $rid) {
-        $form['checkboxes'][$rid][$key]['#title'] = $roles[$rid] . ': ' . $form['permission'][$key]['#markup'];
+        $form['checkboxes'][$rid][$key]['#title'] = $form['role_names'][$rid]['#markup'] . ': ' . $form['permission'][$key]['#markup'];
         $form['checkboxes'][$rid][$key]['#title_display'] = 'invisible';
+        
+        // Filter permissions strips role id class from checkbox. Used by Drupal core functionality.
+        $form['checkboxes'][$rid][$key]['#attributes']['class'][] = 'rid-' . $rid;
+        
         $row['data'][] = array(
           'data' => drupal_render($form['checkboxes'][$rid][$key]),
           'class' => array(
@@ -184,19 +207,21 @@ function theme_fpa_user_admin_permissions($variables) {
             $form['role_names'][$rid]['#markup'],
           ),
           FPA_ATTR_ROLE => array(
-            drupal_html_class($form['role_names'][$rid]['#markup']),
+            $roles_attr_values[$rid],
           ),
         );
       }
       
-      $row['title'] = array(
-        $form['checkboxes'][$rid][$key]['#return_value'],
-      );
+      if (!empty($rid)) {
+        $row['title'] = array(
+          $form['checkboxes'][$rid][$key]['#return_value'],
+        );
+      }
       
       // Mark current row with escaped permission name.
       $row[FPA_ATTR_PERMISSION] = array(
         // Permission system name.
-        0 => $form['checkboxes'][$first_permission_index][$key]['#return_value'],
+        0 => $permission_system_name,
         // Readable description.
         1 => strip_tags($form['permission'][$key]['#markup']),
       );
@@ -221,13 +246,16 @@ function theme_fpa_user_admin_permissions($variables) {
     '#attributes' => array(
       'type' => 'reset',
       'class' => 'form-submit',
-      'value' => t('Undo Changes'),
-      'title' => t('Resets checked permissions to the state they were on page load.'),
+      'value' => t('Reset Changes'),
     ),
   );
   
-  // Have the reset button appear before the submit button.
-  array_unshift($form['actions'], $reset_button);
+  // If there is no submit button, don't add the reset button.
+  if (count(element_children($form['actions'])) > 0) {
+    
+    // Have the reset button appear before the submit button.
+    array_unshift($form['actions'], $reset_button);
+  }
   
   $actions_output = drupal_render_children($form['actions']);
   
@@ -253,14 +281,21 @@ function theme_fpa_user_admin_permissions($variables) {
         $form['role_names'][$rid]['#markup'],
       ),
       FPA_ATTR_ROLE => array(
-        drupal_html_class($form['role_names'][$rid]['#markup']),
+        $roles_attr_values[$rid],
       ),
     );
     $user_roles[$rid] = $form['role_names'][$rid]['#markup'];
   }
   
-  $output = _fpa_wrapper(theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'permissions'))), $modules, $user_roles, $actions_output);
+  $table = array(
+    'header' => $header,
+    'rows' => $rows,
+  );
+  
+  $output = _fpa_wrapper($table, $modules, $user_roles, $actions_output);
+  
   $output .= drupal_render_children($form);
+  
   return $output;
 }
 
@@ -398,6 +433,10 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
   $wrapper['perm_styles']['#attributes']['class'][0] = 'fpa-perm-styles';
   
   /**
+   * @todo need to generate initial styles on server side for initial page load performance.
+   */
+  
+  /**
    * Left section contains module list and form submission button.
    */
   $left_section = array(
@@ -465,7 +504,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
   $items = array();
   
   $all_modules = array(
-    'text' => 'All modules',
+    'text' => t('All modules'),
     FPA_ATTR_MODULE => array(),
     FPA_ATTR_PERMISSION => array(),
   );
@@ -482,7 +521,9 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     $module_item[FPA_ATTR_PERMISSION] = array_reduce($module[FPA_ATTR_PERMISSION], 'array_merge', array());
     
     // Use link for accessibility and tabability.
-    $options = array();
+    $options = array(
+      'fragment' => 'all',
+    );
     
     if (!empty($module['title'])) {
       $options['fragment'] = 'module-' . $module['title'][0];
@@ -562,8 +603,8 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
   $filter_form['perm_filter'] = array(
     '#type' => 'textfield',
     '#title' => t('Filter:'),
+    '#description' => t('Enter in the format of "permission@module", <br>e.g. admin@system will show only permissions with<br>the text "admin" in modules with the text "system".'),
     '#size' => 25,
-    '#description' => 'Enter in the format of "permission@module", <br>e.g. admin@system will show only permissions with<br>the text "admin" in modules with the text "system".',
     '#field_suffix' => drupal_render($clear_button),
     '#attributes' => array(
       'placeholder' => array(
@@ -574,17 +615,31 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     '#value' => $default_filter,
   );
   
+  $cookie_roles = (!empty($_COOKIE['fpa_roles']) && $same_page) ? json_decode($_COOKIE['fpa_roles']) : array();
+  
+  $options = array(
+    '*' => t('--All Roles'),
+  );
+  
+  if (!empty($user_roles)) {
+    $options = array_merge($options, array_combine(array_map('drupal_html_class', $user_roles), $user_roles));
+  }
+  
+  if (in_array('*', $cookie_roles)) {
+    $cookie_roles  = array('*');
+  }
+  
   $filter_form['roles'] = array(
     '#type' => 'select',
     '#title' => t('Roles:'),
+    '#description' => t('Select which roles to display.<br>Ctrl+click to select multiple.'),
     '#size' => 5,
-    '#options' => array_combine($user_roles, $user_roles),
-    '#description' => 'Select which roles to display.<br>Ctrl+click to select multiple.',
-    '#value' => !empty($_COOKIE['fpa_roles']) && $same_page ? json_decode($_COOKIE['fpa_roles']) : $user_roles,
+    '#options' => $options,
     '#attributes' => array(
-      'multiple' => 'miultiple',
+      'multiple' => 'multiple',
       'autocomplete' => 'off',
     ),
+    '#value' => count(array_intersect($cookie_roles, array_keys($options))) > 0 ? $cookie_roles : array('*'),
   );
   
   $right_section['filter_form'] = $filter_form;
@@ -599,8 +654,12 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
   );
   
   $table_wrapper['table'] = array(
-    '#type' => 'markup',
-    '#markup' => $permissions_table,
+    '#theme' => 'table',
+    '#header' => $permissions_table['header'],
+    '#rows' => $permissions_table['rows'],
+    '#attributes' => array(
+      'id' => 'permissions',
+    ),
   );
   
   $table_wrapper['buttons'] = array(

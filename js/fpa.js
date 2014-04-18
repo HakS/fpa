@@ -1,7 +1,7 @@
 
 /**
  * @file
- * JS functionality that creates dynamic CSS which hides permission rows.
+ * JS functionality that creates dynamic CSS which hides permission rows and role columns.
  */
 
 // Wrapper normalizes 'jQuery' to '$'.
@@ -51,7 +51,8 @@
    * @see https://api.drupal.org/api/drupal/includes!common.inc/function/drupal_html_class/7
    */
   var drupal_html_class = (function drupal_html_class_static() {
-    // static vars
+    
+    // Static variables
     var classes = {};
     
     return function drupal_html_class(str) {
@@ -65,6 +66,26 @@
   })();
   
   /**
+   * Handles applying styles to <style /> tags.
+   */
+  var set_style = (function () {
+    
+    // Feature detection. Mainly for IE8.
+    if ($('<style type="text/css" />').get(0).styleSheet) {
+      return function (element, styles) {
+        
+        element.styleSheet.cssText = styles;
+      };
+    }
+    else {
+      return function (element, styles) {
+        element.innerHTML = styles;
+      };
+    }
+    
+  })();
+  
+  /**
    * Callback for click events on module list.
    */
   fpa.filter_module = function (e) {
@@ -72,7 +93,6 @@
     e.stopPropagation();
     
     var $this = $(this);
-    
     
     var current_perm = fpa.dom.filter.val().replace(/(@.*)/, ''); // remove current module filter string.
     
@@ -90,6 +110,7 @@
   
   fpa.build_filter_selectors = (function build_filter_selectors_static() {
     
+    // Static variables
     var selectors = {
       '*=': {},
       '~=': {}
@@ -99,7 +120,7 @@
       
       module_match = selectors.hasOwnProperty(module_match) ? module_match : '*=';
       
-      filter_string = fpa.dom.filter.val();
+      filter_string = filter_string || fpa.dom.filter.val();
       
       if (typeof selectors[module_match][filter_string] === 'undefined') {
         
@@ -108,7 +129,7 @@
           ''  // 1 => module
         ];
         
-        if (['', '@'].indexOf(filter_string) === -1) {
+        if ($.inArray(filter_string, ['', '@']) === -1) {
           
           var matches = filter_string.match(/([^@]*)@?(.*)/i);
           matches.shift(); // Remove whole match item.
@@ -163,7 +184,7 @@
     var filter_selector = fpa.build_filter_selectors(perm, module_match);
     
     // Ensure that 'perm' is filter-able value.
-    if (['', '@'].indexOf(perm) === -1) {
+    if ($.inArray(perm, ['', '@']) === -1) {
       
       // Show matching permissions table rows.
       perm_style_code += table_base_selector + filter_selector.join('') + '{display: table-row;}';
@@ -187,8 +208,7 @@
       perm_style_code += list_base_selector + '[' + fpa.attr.module + '=""]' + module_active_style;
     }
     
-    // .html() does not work on <style /> elements.
-    fpa.dom.perm_style.innerHTML = perm_style_code;
+    set_style(fpa.dom.perm_style, perm_style_code);
   };
   
   fpa.build_role_selectors = function (roles) {
@@ -197,14 +217,13 @@
     
     var selectors = [];
     
-    for (var i in roles) {
-      if (roles.hasOwnProperty(i)) {
-        selectors.push([
-          '.fpa-table-wrapper .checkbox[' + fpa.attr.role + '="' + drupal_html_class(roles[i]) + '"]',
-          '.fpa-table-wrapper td.module[' + fpa.attr.role + '][' + fpa.attr.role + '="' + drupal_html_class(roles[i]) + '"]',
-        ].join(','));
-      }
-    }
+    $.each(roles, function (index, value) {
+      
+      selectors.push([
+        '.fpa-table-wrapper td[' + fpa.attr.role + '="' + value + '"]',
+        '.fpa-table-wrapper th[' + fpa.attr.role + '="' + value + '"]' // No trailing comma, otherwise <= IE8 will add in a null value.
+      ].join(','));
+    });
     
     return selectors;
   };
@@ -229,22 +248,26 @@
     
     $.cookie('fpa_roles', JSON.stringify(values), {path: '/'});
     
-    if (values.length > 0) {
+    // Only filter if "All Roles" is not selected.
+    if ($.inArray('*', values) === -1) {
       
-      selector_array = fpa.build_role_selectors(values);
+      if (values.length > 0) {
+        
+        selector_array = fpa.build_role_selectors(values);
+        
+        role_style_code += selector_array.join(',') + ' {display: table-cell;}';
+        
+        // Ensure right border on last visible role.
+        role_style_code += selector_array.pop() + ' {border-right: 1px solid #bebfb9;}';
+      }
+      else {
+        role_style_code += 'td[class="permission"] {border-right: 1px solid #bebfb9;}';
+      }
       
-      role_style_code += selector_array.join(',') + ' {display: table-cell;}';
-      
-      // Ensure right border on last visible role.
-      role_style_code += selector_array.pop() + ' {border-right: 1px solid #bebfb9;}';
-    }
-    else {
-      role_style_code += 'td[class="permission"] {border-right: 1px solid #bebfb9;}';
+      role_style_code += '.fpa-table-wrapper .checkbox {display: none;}';
     }
     
-    role_style_code += '.fpa-table-wrapper .checkbox, .fpa-table-wrapper td.module[' + fpa.attr.role + '] {display: none;}';
-    
-    fpa.dom.role_style.innerHTML = role_style_code;
+    set_style(fpa.dom.role_style, role_style_code);
   };
   
   fpa.select = function (context) {
@@ -267,8 +290,9 @@
     fpa.dom.role_style = fpa.dom.container.find('.fpa-role-styles style').get(0);
     
     fpa.dom.section_left = fpa.dom.container.find('.fpa-left-section');
+    fpa.dom.section_right = fpa.dom.container.find('.fpa-right-section');
     
-    fpa.dom.table_wrapper = fpa.dom.container.find('.fpa-table-wrapper');
+    fpa.dom.table_wrapper = fpa.dom.section_right.find('.fpa-table-wrapper');
     fpa.dom.table = fpa.dom.table_wrapper.find(fpa.selector.table);
     
     fpa.dom.module_list = fpa.dom.section_left.find('ul');
@@ -282,7 +306,7 @@
   
   fpa.prepare = function () {
     
-    fpa.filter_timeout_time = Math.min(fpa.dom.table.find('tr').length, 500);
+    fpa.filter_timeout_time = Math.min(fpa.dom.table.find('tr').length, 200);
     
     fpa.dom.form
       .delegate('.fpa-toggle-container a', 'click', function _fpa_toggle(e) {
@@ -299,7 +323,7 @@
     ;
     
     fpa.dom.section_left
-      .delegate('li[' + fpa.attr.module + ']', 'click', fpa.filter_module)
+      .delegate('li', 'click', fpa.filter_module)
     ;
     
     fpa.dom.filter
@@ -314,13 +338,22 @@
       .keyup(function _fpa_filter_keyup(e) {
         
         // Prevent ['Enter', 'Shift', 'Ctrl', 'Alt'] from triggering filter.
-        if ([13, 16, 17, 18].indexOf(e.which) === -1) {
+        if ($.inArray(e.which, [13, 16, 17, 18]) === -1) {
           
-          // clearTimeout(fpa.filter_timeout);
-//           
-          // fpa.filter_timeout = setTimeout(function () {
-            fpa.filter();
-          // }, fpa.filter_timeout_time);
+          clearTimeout(fpa.filter_timeout);
+          
+          fpa.filter_timeout = setTimeout(function () {
+            
+            fpa.dom.table_wrapper
+              .detach()
+              .each(function () {
+                
+                fpa.filter();
+              })
+              .appendTo(fpa.dom.section_right)
+            ;
+            
+          }, fpa.filter_timeout_time);
         }
       })
     ;
@@ -355,113 +388,104 @@
       // Wait till after the form elements have been reset.
       setTimeout(function _fpa_fix_authenticated_behavior() {
         
-        // Trigger Drupal core 'authenticated user' checkbox behavior.
-        fpa.dom.form
-          .find('input[type="checkbox"].rid-2')
-          .each(Drupal.behaviors.permissions.toggle)
+        fpa.dom.table_wrapper
+          .detach() // Don't make numerous changes while elements are in the rendered DOM.
+          .each(function (index, element) {
+            
+            $(element)
+              .find('input[type="checkbox"]')
+              .not('.dummy-checkbox')
+              
+              .filter('.rid-2')
+              .each(Drupal.behaviors.permissions.toggle)
+            ;
+          })
+          .appendTo(fpa.dom.section_right)
         ;
+        
       }, 0);
     });
     
     
     // Role checkboxes toggle all visible permissions for this column.
     fpa.dom.table_wrapper
-      .delegate('th[' + fpa.attr.role + '] input[type="checkbox"]', 'change', function _fpa_role_permissions_toggle() {
+      .delegate('th[' + fpa.attr.role + '] input[type="checkbox"].fpa-checkboxes-toggle', 'change', function _fpa_role_permissions_toggle() {
+        
+        var $this = $(this);
         
         // Get visible rows selectors.
         var filters = fpa.build_filter_selectors(fpa.dom.filter.val());
         
         fpa.dom.table_wrapper
-          .find('tr' + filters.join('') + ' .checkbox[' + fpa.attr.role + '="' + $(this).parent().attr(fpa.attr.role) + '"] input[type="checkbox"]')
-          .not('.dummy-checkbox')
-          .attr('checked', $(this).attr('checked'))
-          .filter('.rid-2') // Following only applies to "Authenticated User" role.
-          .each(Drupal.behaviors.permissions.toggle)
-        ;
-        
-      })
-    ;
+          .detach()
+          .each(function (index, element) {
+            
+            $(element)
+              .find('tr' + filters.join('') + ' td.checkbox[' + fpa.attr.role + '="' + $this.closest('[' + fpa.attr.role + ']').attr(fpa.attr.role) + '"] input[type="checkbox"]')
+              
+              .not('.dummy-checkbox')
     
-    // Role checkboxes toggle all visible permissions for this column.
-    fpa.dom.table_wrapper
-      .delegate('input[type="checkbox"].fpa-row-toggle', 'change', function _fpa_role_permissions_toggle() {
-        
-        // Get visible rows selectors.
-        var filters = fpa.build_role_selectors(fpa.dom.role_select.val());
-        
-        $(this)
-          .closest('tr')
-          .find('td.checkbox')
-          .filter(filters.join(','))
-          .find('input[type="checkbox"]')
-          .not('.dummy-checkbox')
-          .attr('checked', $(this).attr('checked'))
-          .filter('.rid-2') // Following only applies to "Authenticated User" role.
-          .each(Drupal.behaviors.permissions.toggle)
-        ;
-        
-      })
-    ;
-    
-    /*
-    fpa.dom.table
-      .delegate('td.fpa-system-name+td.permission', 'mouseenter', function _fpa_row_checkbox() {
-        return;
-        $('<input type="checkbox" style="veritical-align:middle; display:inline-block;" />')
-          .click(function (e) {
-            e.stopPropagation(); // Prevent admin_menu changing row visibility.
-          })
-          .change(function () {
-            
-            var $this = $(this);
-            
-            var role_name = $this.parent().attr('title');
-            var module_system_name = $this.closest('tr').attr('title');
-            var selector = 'tr[' + fpa.attr.module + '~="' + drupal_html_class(module_system_name) + '"] td[title="' + role_name + '"].checkbox input[type="checkbox"]';
-            
-            $(selector)
-              .attr('checked', $this.attr('checked'))
-              .filter('.rid-2') // Following only apply to "Authenticated User" role.
+              .attr('checked', $this.attr('checked') ? 'checked' : '')
+              
+              .filter('.rid-2') // Following only applies to "Authenticated User" role.
               .each(Drupal.behaviors.permissions.toggle)
             ;
-            
           })
-          // .appendTo(this)
-          // .wrap('<div class="form-item form-type-checkbox " />')
+          .appendTo(fpa.dom.section_right)
         ;
-      })
-      .delegate('td.fpa-system-name+td.permission', 'mouseleave', function () {
-        // $(this).find('input[type="checkbox"]').remove();
+        
       })
     ;
-    */
+    
+    // Permission checkboxes toggle all visible permissions for this row.
+    fpa.dom.table_wrapper
+      .delegate('td.permission input[type="checkbox"].fpa-checkboxes-toggle', 'change', function _fpa_role_permissions_toggle() {
+        
+        var $this = $(this);
+        
+        var values = fpa.dom.role_select.val();
+        
+        // Get visible rows selectors.
+        var filters = $.inArray('*', values) === -1 ? fpa.build_role_selectors(values) : ['*'];
+        
+        fpa.dom.table_wrapper
+          .detach()
+          .each(function (index, element) {
+            
+            $this
+              .closest('tr')
+              .find('td.checkbox')
+              .filter(filters.join(','))
+              .find('input[type="checkbox"]')
+              
+              .not('.dummy-checkbox')
+              
+              .attr('checked', $this.attr('checked') ? 'checked' : '')
+              
+              .filter('.rid-2') // Following only applies to "Authenticated User" role.
+              .each(Drupal.behaviors.permissions.toggle)
+            ;
+          })
+          .appendTo(fpa.dom.section_right)
+        ;
+        
+      })
+    ;
     
     // Clear contents of search field and reset visible permissions.
-    (function () {
-      
-      var foci;
-      
-      fpa.dom.form
-        .delegate('.fpa-clear-search', 'mousedown', function () {
-          foci = document.activeElement;
-        })
-        .delegate('.fpa-clear-search', 'click', function () {
-          
-          fpa.dom.filter
-            .val('')
-            .keyup()
-          ;
-          
-          foci.focus();
-        })
-      ;
-    })();
-    
-    
+    fpa.dom.form
+      .delegate('.fpa-clear-search', 'click', function () {
+        
+        fpa.dom.filter
+          .val('')
+          .trigger('keyup')
+        ;
+      })
+    ;
     
     // Change visible roles.
     fpa.dom.role_select
-      .bind('change blur mouseout', fpa.filter_roles)
+      .bind('change blur', fpa.filter_roles)
       .change()
       // Prevent <option /> elements from bubbling mouseout event.
       .find('option')
@@ -474,6 +498,7 @@
     setTimeout(function _fpa_filter_focus() {
       fpa.dom.filter.focus();
     }, 0);
+    
     
   };
   
@@ -492,7 +517,11 @@
         })
       ;
     
-      fpa.attr = settings.fpa.attr;
+      fpa.attr = settings.fpa.attr || {
+        module: "fpa-module",
+        permission: "fpa-permission",
+        role: "fpa-role"
+      };
       
       if (fpa.select(context)) {
         fpa.prepare();

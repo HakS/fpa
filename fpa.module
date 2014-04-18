@@ -25,6 +25,9 @@ function fpa_hook_info() {
   $hooks['form_user_admin_permissions_alter'] = array(
     'group' => 'form_alter',
   );
+  $hooks['form_filter_perms_admin_perm_filter_alter'] = array(
+    'group' => 'form_alter',
+  );
   
   return $hooks;
 }
@@ -59,10 +62,13 @@ function fpa_admin_paths() {
  * Implements hook_help().
  */
 function fpa_help($path, $arg) {
-  switch ($path) {
-    case 'admin/people/permissions':
-      return '<p>' . t('Permissions and Module names will match on the readable or system name. You can hover over a module or permission to see the Drupal system name for that item.') . '</p>';
-      break;
+  if ($path == 'admin/people/permissions') {
+    
+    $output = '';
+    
+    $output .= '<p>' . t('Permissions and Module names will match on the readable or system name. The system name is provided as a togglable column.') . '</p>';
+    
+    return $output;
   }
 }
 
@@ -175,4 +181,36 @@ function _fpa_ctools($js = NULL) {
   
   echo ajax_render($output);
   exit;
+}
+
+/**
+ * @return Approximate number of bytes of ram required to render the permissions form.
+ */
+function _fpa_memory_required() {
+  
+  $permissions_count = count(module_invoke_all('permission'));
+  
+  $user_roles_count = count(user_roles());
+  
+  
+  $page_ram_required = (9 * 1024 * 1024);
+  
+  
+  // Takes ~26kb per row without any checkboxes.
+  $permission_row_overhead = 27261.028783658;
+  
+  $permissions_ram_required = $permissions_count * $permission_row_overhead;
+  
+  
+  // Determined by checking peak ram on permissions page, over several different number of visible roles.
+  $bytes_per_checkbox = 18924.508820799;
+  
+  $checkboxes_ram_required = $permissions_count * $user_roles_count * $bytes_per_checkbox;
+  
+  
+  return (int) ($page_ram_required + $permissions_ram_required + $checkboxes_ram_required);
+}
+
+function _fpa_reset_role_filter_defaults() {
+  setcookie("fpa_roles", "", time() - 3600, '/');
 }
