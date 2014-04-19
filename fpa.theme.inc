@@ -103,7 +103,9 @@ function theme_fpa_user_admin_permissions($variables) {
   $i = 0;
   
   $first_permission_index = array_shift(element_children($form['checkboxes']));
-  
+
+  $rows = array();
+
   // Iterate over rows in form table.
   foreach (element_children($form['permission']) as $key) {
     
@@ -246,7 +248,7 @@ function theme_fpa_user_admin_permissions($variables) {
     '#attributes' => array(
       'type' => 'reset',
       'class' => 'form-submit',
-      'value' => t('Reset Changes'),
+      'value' => t('Reset changes'),
     ),
   );
   
@@ -585,7 +587,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
         'fpa-clear-search',
         'form-submit',
       ),
-      'value' => 'Clear Filter',
+      'value' => 'Clear filter',
     ),
   );
   

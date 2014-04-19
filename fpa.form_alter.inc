@@ -37,7 +37,7 @@ function fpa_form_user_admin_permissions_alter(&$form, &$form_state) {
   $form['#attached']['library'][] = array('system', 'jquery.cookie');
 
   $form['#attached']['css'][] = $fpa_module_path . '/css/fpa.css';
-  $form['#attached']['js'][] = $fpa_module_path . '/js/fpa.js';
+  $form['#attached']['js'][] = $fpa_module_path . '/js/fpa.min.js';
   $form['#attached']['js'][] = array(
     'type' => 'setting',
     'data' => array(

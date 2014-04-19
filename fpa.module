@@ -184,7 +184,7 @@ function _fpa_ctools($js = NULL) {
 }
 
 /**
- * @return Approximate number of bytes of ram required to render the permissions form.
+ * @return int Approximate number of bytes of ram required to render the permissions form.
  */
 function _fpa_memory_required() {
   

@@ -213,17 +213,20 @@
   
   fpa.build_role_selectors = function (roles) {
     
-    roles = roles || [];
+    roles = roles || fpa.dom.role_select.val();
     
     var selectors = [];
     
-    $.each(roles, function (index, value) {
+    if ($.inArray('*', roles) === -1) {
       
-      selectors.push([
-        '.fpa-table-wrapper td[' + fpa.attr.role + '="' + value + '"]',
-        '.fpa-table-wrapper th[' + fpa.attr.role + '="' + value + '"]' // No trailing comma, otherwise <= IE8 will add in a null value.
-      ].join(','));
-    });
+      $.each(roles, function (index, value) {
+        
+        selectors.push('[' + fpa.attr.role + '="' + value + '"]');
+      });
+    }
+    else {
+      selectors.push('*');
+    }
     
     return selectors;
   };
@@ -255,7 +258,10 @@
         
         selector_array = fpa.build_role_selectors(values);
         
-        role_style_code += selector_array.join(',') + ' {display: table-cell;}';
+        $.each(selector_array, function (index, value) {
+          
+          role_style_code += '.fpa-table-wrapper [' + fpa.attr.role + ']' + value + ' {display: table-cell;}';
+        });
         
         // Ensure right border on last visible role.
         role_style_code += selector_array.pop() + ' {border-right: 1px solid #bebfb9;}';
@@ -264,7 +270,7 @@
         role_style_code += 'td[class="permission"] {border-right: 1px solid #bebfb9;}';
       }
       
-      role_style_code += '.fpa-table-wrapper .checkbox {display: none;}';
+      role_style_code += '.fpa-table-wrapper [' + fpa.attr.role + '] {display: none;}';
     }
     
     set_style(fpa.dom.role_style, role_style_code);
@@ -446,14 +452,18 @@
         var values = fpa.dom.role_select.val();
         
         // Get visible rows selectors.
-        var filters = $.inArray('*', values) === -1 ? fpa.build_role_selectors(values) : ['*'];
         
-        fpa.dom.table_wrapper
+        var filters = fpa.build_role_selectors(values);
+        
+        var $row = $this.closest('tr');
+        
+        var $previous_row = $row.prev('tr'); // All rows with checkboxes have at least the module row as previous.
+        
+        $row
           .detach()
-          .each(function (index, element) {
+          .each(function () {
             
-            $this
-              .closest('tr')
+            $(this)
               .find('td.checkbox')
               .filter(filters.join(','))
               .find('input[type="checkbox"]')
@@ -465,8 +475,9 @@
               .filter('.rid-2') // Following only applies to "Authenticated User" role.
               .each(Drupal.behaviors.permissions.toggle)
             ;
+            
           })
-          .appendTo(fpa.dom.section_right)
+          .insertAfter($previous_row)
         ;
         
       })
@@ -498,7 +509,6 @@
     setTimeout(function _fpa_filter_focus() {
       fpa.dom.filter.focus();
     }, 0);
-    
     
   };
   
