@@ -33,7 +33,7 @@ function theme_fpa_user_admin_permissions($variables) {
     '#attributes' => array(
       'type' => 'checkbox',
       'class' => array(
-        'rid-1',
+        'rid-1', // Prevents Drupal core Drupal.behaviors.permissions.toggle from applying.
         'form-checkbox',
         'fpa-checkboxes-toggle',
       ),
@@ -41,6 +41,24 @@ function theme_fpa_user_admin_permissions($variables) {
   );
   
   $nameless_checkbox_output = drupal_render($nameless_checkbox);
+  
+  
+  $dummy_checkbox = array(
+    '#type' => 'html_tag',
+    '#tag' => 'input',
+    '#attributes' => array(
+      'type' => 'checkbox',
+      'disabled' => 'disabled',
+      'checked' => 'checked',
+      'title' => t('This permission is inherited from the authenticated user role.'),
+      'class' => array(
+        'dummy-checkbox',
+      ),
+    ),
+  );
+  
+  $dummy_checkbox_output = drupal_render($dummy_checkbox);
+  
   
   $permission_col_template = array(
     '#type' => 'container',
@@ -121,6 +139,7 @@ function theme_fpa_user_admin_permissions($variables) {
     if (is_numeric($key)) {
       // Module row.
       
+      $row['class'][] = 'fpa-module-row';
       
       // Mark current row with escaped module name.
       $row[FPA_ATTR_MODULE] = array(
@@ -128,12 +147,6 @@ function theme_fpa_user_admin_permissions($variables) {
         0 => $form['permission'][$key]['#id'],
         // Readable name
         1 => strip_tags($form['permission'][$key]['#markup']),
-      );
-      
-      // System Name
-      $row['data'][] = array(
-        'data' => $row[FPA_ATTR_MODULE][0],
-        'class' => array('fpa-system-name module'),
       );
       
       // Readable
@@ -146,7 +159,7 @@ function theme_fpa_user_admin_permissions($variables) {
       
       $row['title'] = array($form['permission'][$key]['#id']);
       
-      // $row['fpa-system-name'] = $row[FPA_ATTR_MODULE][0];
+      $row['fpa-system-name'] = $row[FPA_ATTR_MODULE][0];
       
       $row[FPA_ATTR_MODULE] = array_unique(array_map('drupal_html_class', $row[FPA_ATTR_MODULE]));
       
@@ -164,19 +177,14 @@ function theme_fpa_user_admin_permissions($variables) {
     else {
       // Permission row.
       
+      $row['class'][] = 'fpa-permission-row';
+      
       $permission_system_name = '';
       
       // Might be empty if no modules are displayed in Permissions Filter module.
       if (!empty($form['checkboxes'][$first_permission_index])) {
         $permission_system_name = $form['checkboxes'][$first_permission_index][$key]['#return_value'];
       }
-      
-      // System name
-      $row['data'][] = array(
-        'data' => $permission_system_name,
-        'class' => array('fpa-system-name permission'),
-      );
-      
       
       $label = $permission_col_template;
       
@@ -200,6 +208,10 @@ function theme_fpa_user_admin_permissions($variables) {
         // Filter permissions strips role id class from checkbox. Used by Drupal core functionality.
         $form['checkboxes'][$rid][$key]['#attributes']['class'][] = 'rid-' . $rid;
         
+        if ($rid > 2) {
+          $form['checkboxes'][$rid][$key]['#field_suffix'] = $dummy_checkbox_output;
+        }
+        
         $row['data'][] = array(
           'data' => drupal_render($form['checkboxes'][$rid][$key]),
           'class' => array(
@@ -216,6 +228,10 @@ function theme_fpa_user_admin_permissions($variables) {
       
       if (!empty($rid)) {
         $row['title'] = array(
+          $form['checkboxes'][$rid][$key]['#return_value'],
+        );
+        
+        $row['fpa-system-name'] = array(
           $form['checkboxes'][$rid][$key]['#return_value'],
         );
       }
@@ -264,11 +280,6 @@ function theme_fpa_user_admin_permissions($variables) {
   $header = array();
   
   $header[] = array(
-    'data' => t('System Name'),
-    'class' => array('fpa-system-name'),
-  );
-  
-  $header[] = array(
     'data' => t('Permission') . $actions_output,
   );
   
@@ -308,19 +319,32 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
   
   $same_page = trim(parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH), '/') == $_GET['q'];
   
-  $class_hide_descriptions = 'fpa-hide-descriptions';
-  $class_hide_system_names = 'fpa-hide-system-names';
-  
   $render = array(
     '#type' => 'container',
     '#attributes' => array(
       'class' => array(
         'fpa-container',
-        !empty($_COOKIE[$class_hide_descriptions]) && $_COOKIE[$class_hide_descriptions] == 'true' ? $class_hide_descriptions : '',
-        !empty($_COOKIE[$class_hide_system_names]) && $_COOKIE[$class_hide_system_names] == 'true' ? $class_hide_system_names : '',
       ),
     ),
   );
+  
+  $hiders = array(
+    'fpa-hide-descriptions' => array(
+      'hide' => t('Hide descriptions'),
+      'show' => t('Show descriptions'),
+    ),
+    'fpa-hide-system-names' => array(
+      'hide' => t('Hide system names'),
+      'show' => t('Show system names'),
+    ),
+  );
+  
+  foreach ($hiders as $hide_class => $labels) {
+    
+    if (!isset($_COOKIE[$hide_class]) || !$same_page || ($same_page && $_COOKIE[$hide_class] == 'true')) {
+      $render['#attributes']['class'][] = $hide_class;
+    }
+  }
   
   $hide_container = array(
     '#type' => 'container',
@@ -331,7 +355,6 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     ),
   );
   
-  
   $toggle_link_template = array(
     '#type' => 'markup', // html_tag adds erroneous newlines, which mess with inline elements.
     '#markup' => '',
@@ -339,52 +362,21 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     '#suffix' => '</span>'
   );
   
-  $toggle_links_template = array(
-    'hide' => $toggle_link_template,
-    'show' => $toggle_link_template,
-  );
-  
-  
-  $toggle_descriptions_links = $toggle_links_template;
-  
-  $toggle_descriptions_links['hide']['#markup'] = t('Hide descriptions');
-  $toggle_descriptions_links['show']['#markup'] = t('Show descriptions');
-  
-  $hide_descriptions = array(
-    '#theme' => 'link',
-    '#text' => drupal_render($toggle_descriptions_links),
-    '#path' => $_GET['q'],
-    '#options' => array(
-      'attributes' => array(
-        'fpa-toggle-class' => $class_hide_descriptions,
+  foreach ($hiders as $hide_class => $labels) {
+    
+    $hide_container[$hide_class] = array(
+      '#theme' => 'link',
+      '#text' => '',
+      '#path' => $_GET['q'],
+      '#options' => array(
+        'attributes' => array_merge($labels, array(
+          'fpa-toggle-class' => $hide_class,
+        )),
+        'html' => TRUE,
+        'fragment' => ' ',
       ),
-      'html' => TRUE,
-      'fragment' => ' ',
-    ),
-  );
-  
-  $hide_container['hide_descriptions'] = $hide_descriptions;
-  
-  
-  $toggle_system_name_links = $toggle_links_template;
-  
-  $toggle_system_name_links['hide']['#markup'] = t('Hide system names');
-  $toggle_system_name_links['show']['#markup'] = t('Show system names');
-  
-  $hide_system_name = array(
-    '#theme' => 'link',
-    '#text' => drupal_render($toggle_system_name_links),
-    '#path' => $_GET['q'],
-    '#options' => array(
-      'attributes' => array(
-        'fpa-toggle-class' => $class_hide_system_names,
-      ),
-      'html' => TRUE,
-      'fragment' => ' ',
-    ),
-  );
-  
-  $hide_container['hide_system_name'] = $hide_system_name;
+    );
+  }
   
   $render['hide_container'] = $hide_container;
   
@@ -593,19 +585,19 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
   
   $default_filter = '';
   
-  if (!empty($_COOKIE['fpa_filter']) && $same_page) {
-    $default_filter = $_COOKIE['fpa_filter'];
-  }
-  
   if (!empty($_GET['fpa_perm'])) {
     $default_filter = $_GET['fpa_perm'];
   }
   
+  if (!empty($_COOKIE['fpa_filter']) && $same_page) {
+    $default_filter = $_COOKIE['fpa_filter'];
+  }
   
-  $filter_form['perm_filter'] = array(
+  
+  $filter_form['permission_module_filter'] = array(
     '#type' => 'textfield',
     '#title' => t('Filter:'),
-    '#description' => t('Enter in the format of "permission@module", <br>e.g. admin@system will show only permissions with<br>the text "admin" in modules with the text "system".'),
+    '#description' => t('<p>Enter in the format of "permission@module",</p><p>e.g. <em>admin@system</em> will show only permissions with the<br>text "admin" in modules with the text "system".</p><p>This will also match on system name of a permission.</p>'),
     '#size' => 25,
     '#field_suffix' => drupal_render($clear_button),
     '#attributes' => array(
@@ -631,7 +623,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     $cookie_roles  = array('*');
   }
   
-  $filter_form['roles'] = array(
+  $filter_form['role_filter'] = array(
     '#type' => 'select',
     '#title' => t('Roles:'),
     '#description' => t('Select which roles to display.<br>Ctrl+click to select multiple.'),
@@ -639,7 +631,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     '#options' => $options,
     '#attributes' => array(
       'multiple' => 'multiple',
-      'autocomplete' => 'off',
+      'autocomplete' => 'off', // Keep browser from populating this from 'cached' input.
     ),
     '#value' => count(array_intersect($cookie_roles, array_keys($options))) > 0 ? $cookie_roles : array('*'),
   );
@@ -662,6 +654,18 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     '#attributes' => array(
       'id' => 'permissions',
     ),
+  );
+  
+  // Hide table until full table HTML is loaded. Reduces progressive table load reflow.
+  $table_wrapper['show_table'] = array(
+    '#type' => 'html_tag',
+    '#tag' => 'style',
+    '#attributes' => array(
+      'type' => array(
+        'text/css',
+      ),
+    ),
+    '#value' => '#permissions {display: table;} .fpa-table-wrapper {background: none;}',
   );
   
   $table_wrapper['buttons'] = array(

@@ -68,6 +68,8 @@ function fpa_help($path, $arg) {
     
     $output .= '<p>' . t('Permissions and Module names will match on the readable or system name. The system name is provided as a togglable column.') . '</p>';
     
+    $output .= '<p>' . t('Enter in the format of "permission@module", <br>e.g. admin@system will show only permissions with<br>the text "admin" in modules with the text "system".') . '</p>';
+    
     return $output;
   }
 }

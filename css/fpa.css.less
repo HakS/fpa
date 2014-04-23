@@ -27,7 +27,6 @@ body.page-admin-people-permissions {
 }
 
 .fpa-container {
-  display: table;
   width: 100%;
 }
 
@@ -96,6 +95,7 @@ body.page-admin-people-permissions {
 }
 
 .fpa-right-section {
+  width: 100%;
   background-color: white;
   border-left-width: 0;
 }
@@ -165,13 +165,6 @@ div.ctools-modal-content .fpa-container .form-item label {
   content: " of " attr(fpa-total);
 }
 
-/*
- * Hide counter on "All modules" item.
- */
-.fpa-left-section li.first .fpa-perm-total {
-  /*display: none;*/
-}
-
 .fpa-toggle-container {
   padding: 0.5em;
 }
@@ -180,18 +173,70 @@ div.ctools-modal-content .fpa-container .form-item label {
   margin: 0.5em;
 }
 
-.fpa-system-name {
-  white-space: nowrap;
-}
-
-.fpa-hide-system-names .fpa-system-name {
-  display: none;
-}
-
 .fpa-hide-descriptions table#permissions .description {
   display: none;
 }
 
+.fpa-table-wrapper tr:before {
+  white-space: nowrap;
+  
+  .fpa-hide-system-names & {
+    display: none;
+  }
+}
+
+// Need to have this to now interfere with admin_menu.
+.fpa-table-wrapper thead tr:before {
+  content: "System Name";
+  display: table-cell;
+  
+  border-bottom: 3px solid #ccc;
+  padding-right: 1em;
+  text-align: left;
+  
+  vertical-align: middle;
+  padding: 8px 10px;
+  border: 0;
+  color: #000;
+  
+  text-transform: uppercase;
+  background: #e1e2dc;
+  font-weight: normal;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #bebfb9;
+}
+
+.fpa-table-wrapper tbody tr {
+  &:before {
+    content: attr(fpa-system-name);
+    display: table-cell;
+    
+    vertical-align: middle;
+    padding: 8px 10px;
+    border: 0;
+    color: #000;
+    
+    text-align: left;
+  }
+  
+  &.fpa-module-row:before {
+    font-weight: bold;
+  }
+  
+  &.fpa-permission-row:before {
+    padding-left: 1.5em;
+  }
+}
+
+/**
+ * Tweak how the table is initially displayed to prevent premature reflow.
+ * 
+ * The table is displayed with a <style /> tag immediately after in the HTML.
+ */
+#permissions {
+  display: none;
+}
 
 /**
  *   Styling for injected checkboxes.
@@ -206,25 +251,21 @@ div.ctools-modal-content .fpa-container .form-item label {
   margin: 0.5em auto;
 }
 
-.fpa-hide-descriptions a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:first-child,
-a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:last-child {
-  display: none;
+.fpa-hide-descriptions a[fpa-toggle-class="fpa-hide-descriptions"]:before {
+  content: attr(show);
 }
 
-a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:first-child,
-.fpa-hide-descriptions a[fpa-toggle-class="fpa-hide-descriptions"] .fpa-toggle-link:last-child {
-  display: inline;
+a[fpa-toggle-class="fpa-hide-descriptions"]:before {
+  content: attr(hide);
 }
 
 
-.fpa-hide-system-names a[fpa-toggle-class="fpa-hide-system-names"] .fpa-toggle-link:first-child,
-a[fpa-toggle-class="fpa-hide-system-names"] .fpa-toggle-link:last-child {
-  display: none;
+.fpa-hide-system-names a[fpa-toggle-class="fpa-hide-system-names"]:before {
+  content: attr(show);
 }
 
-a[fpa-toggle-class="fpa-hide-system-names"] .fpa-toggle-link:first-child,
-.fpa-hide-system-names a[fpa-toggle-class="fpa-hide-system-names"] .fpa-toggle-link:last-child {
-  display: inline;
+a[fpa-toggle-class="fpa-hide-system-names"]:before {
+  content: attr(hide);
 }
 
 #user-admin-permissions .form-submit.fpa-clear-search {
@@ -276,7 +317,9 @@ td.checkbox,
 .fpa-table-wrapper td.checkbox input[type="checkbox"] {
   border-collapse: separate;
   
-  &:checked:not([checked]) {
+  // [checked] = state of page load.
+  // :checked  = current state.
+  &:not([checked]):checked {
     box-shadow: 0px 0px 10px 6px rgba(0, 255, 0, 0.5);
   }
   
@@ -302,4 +345,34 @@ html.js .fpa-checkboxes-toggle {
 
 html.js .fpa-filter-form {
   display: block;
+}
+
+.fpa-table-wrapper {
+  background-repeat: no-repeat;
+  background-position: center -18px;
+  background-image: url('data:image/gif;base64,R0lGODlhDwAoAMQAAAAAAAhzvQx7vRh7xhyExjWQykaczlqi02uv2Iu/4bW1taDO57XW7729vb3e78bGxs7OztbW1t7e3sri89bn997v9+fn5+fv9+f3/+/v7+/3//f39/f3//f//////wAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFBgAAACwAAAAADwAoAAAFxiAgApkUWduoAhukvC+UqlujNFD0vI2nuo8ZyRYZZW5C0VExkyiKK8DOIoooJFGAFQtwQldTJXK1FAKFGSLNpsjtbj6aC/ZMqkone3bP7/v/gIGCfhQJCAsVexUGAY2NBxorFQIBAgQBl5gcKowFFQkBCROXCCMUlRceoAkeE42RAAsBCB6qobWMDCIIt7asHrwJIqC0HgwHDLgBugCnAqm1ta4BsACdFdETA7Mqk40GCIyaKxfijgjVKxQLh4mD7/Dx8vIhAAAh+QQFBgAAACwAABQADQANAAAFRyAgAtOSANqoriI3XgQQFEchFunqcUQwvCpPImBwiC6rikxpc5wQooNKulgApIALwjVyTGQskcAzinVZ5qsNsA5HkSvkaRUCACH5BAUGAAAALAAAFAANAA0AAAU/ICAC11iNY4mKKnCKxsqtoudNwjgBweg5hZ7AIzqwjAECDSVI0BAoVYEFyK0cvFZhJ+KmRtOYSGNazlZe8igEACH5BAUGAAAALAAAFAANAA0AAAVIICACVIKMKFClooYKAIwYIsGmtkjFqOdNgIALcAI4EsiEjXFKiJyBaACARDEO2MNydwMChqLVTQUDGIoAAmd0YSHAo91JLAoBACH5BAUGAAAALAAAFAANAA0AAAVJICAC05IA2qiuIjdeBBAUx1ikbH7lgCPuqgvi4vEUeieEqCZIeGqLBaAG2AUChKNjIlM5CgGAwDOKjRyClXl6BLR5U2AQcFqFAAAh+QQFBgAAACwAABQADQANAAAFQCAgAtdYjWOJiipwigZQjNy6DuMEBLYueKIDqgaI2UQJ4AohqvAqShJAMEoEDI5dq6DjEHio7UpjOhJROhF5FAIAIfkEBQYAAAAsAAAUAA0ADQAABUUgIAIUgIwoUKWihgoAjBgiwaa2WMJ34JoiR8KBYpwSIuToqEwCEh4AjVEaJQLQSQtVuSYmAy6PEMgROKMLC/FDlU6rUQgAIfkEBQYAAAAsAAAUAA0ADQAABUYgIAITkADaqK4iN14EEBTHWKRsfuWAI+6qCwJX6J0QohoSUFssmL2AACdylAKAQmDhGQm6osHM4/GtYtlDMcsbHYBBEysEACH5BAUGAAAALAAAFAANAA0AAAVBICAC11iNY4mKKnCKBlCM3LoO4wQEti54ooPoVAPEUJwEzwYj8BCjGUkUMFCAAMeuRZhgdagWbKQxMYsoMKA8CgEAIfkEBQYAAAAsAAAUAA0ADQAABUkgIAJUgowoUKWihgoAjBgiwaa2SMU3EGgJAOFAPDBQjFNgKQoCTs5CYppwiGiMneDi8YwmrVFh1avAAIZTjTO6sBCu1O5EFoUAACH5BAUGAAAALAAAFAANAA0AAAVIICAC05IA2qiuIjdeBBAUx1ikY8yKlxwYlJGDtwAYCIEAAlcAOE4IzgmAENWKgIPHU4mqHBPZDiDw5L4sXbYJYI+zvVVvqgoBACH5BAUGAAAALAAAFAANAA0AAAVBICAC11iNY4mKKnCixcitQSwO48QWwSLqAo/o4HEABCPDyuM5rFAIFkAjspWQK2OgVdD9VlyAUkQVvVazlXeKCgEAOw==');
+  min-height: 18px;
+}
+
+.fpa-role-styles,
+.fpa-perm-styles {
+  display: none;
+}
+
+.fpa-wrapper {
+  display: table;
+}
+
+.dummy-checkbox {
+  display: none;
+}
+
+.fpa-authenticated-role-behavior {
+  input[type="checkbox"] {
+    display: none;
+    
+    &.rid-1, &.rid-2, &.dummy-checkbox {
+      display: inline-block;
+    }
+  }
 }
