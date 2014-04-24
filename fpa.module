@@ -213,6 +213,8 @@ function _fpa_memory_required() {
   return (int) ($page_ram_required + $permissions_ram_required + $checkboxes_ram_required);
 }
 
-function _fpa_reset_role_filter_defaults() {
-  setcookie("fpa_roles", "", time() - 3600, '/');
+function _fpa_reset_filter_defaults() {
+  setcookie("fpa_module_match", "", time() - 3600, '/');
+  setcookie("fpa_filter",       "", time() - 3600, '/');
+  setcookie("fpa_roles",        "", time() - 3600, '/');
 }

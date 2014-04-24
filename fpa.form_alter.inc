@@ -57,5 +57,5 @@ function fpa_form_user_admin_permissions_alter(&$form, &$form_state) {
  */
 function fpa_form_filter_perms_admin_perm_filter_alter(&$form, &$form_state) {
   
-  $form['#submit'][] = '_fpa_reset_role_filter_defaults';
+  $form['#submit'][] = '_fpa_reset_filter_defaults';
 }
