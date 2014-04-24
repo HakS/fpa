@@ -146,11 +146,11 @@
     
     matches.shift(); // Remove whole match item.
     
-    var matches_safe = $.map(matches, $.proxy(this.drupal_html_class, this));
+    var safe_matches = $.map(matches, $.proxy(this.drupal_html_class, this));
     
     this.filter_selector_cache[module_match][filter_string] = [
-      matches_safe[0].length > 0 ? '[' + this.attr.permission + '*="' + matches_safe[0] + '"]' : '',
-      matches_safe[1].length > 0 ? '[' + this.attr.module + module_match + '"' + matches_safe[1] + '"]' : ''
+      safe_matches[0].length > 0 ? '[' + this.attr.permission          + '*="' + safe_matches[0] + '"]' : '',
+      safe_matches[1].length > 0 ? '[' + this.attr.module + module_match + '"' + safe_matches[1] + '"]' : ''
     ];
     
     return this.filter_selector_cache[module_match][filter_string];
@@ -208,6 +208,28 @@
     
   };
   
+  /**
+   * Prevent the current filter from being cleared on form reset.
+   */
+  Fpa.prototype.save_filters = function () {
+    
+    /**
+     * element.defaultValue is what 'input' elements reset to.
+     * 
+     * @link http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-26091157
+     */
+    this.dom.filter.get(0).defaultValue = this.dom.filter.val();
+    
+    /**
+     * element.defaultSelected is what 'option' elements reset to.
+     * 
+     * @see http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-37770574
+     */
+    this.dom.role_select.find('option').each(function (index, element) {
+      element.defaultSelected = element.selected;
+    });
+  };
+  
   Fpa.prototype.filter = function (module_match) {
     
     // Assign default value if undefined.
@@ -216,15 +238,9 @@
     var perm = this.dom.filter.val();
     
     $.cookie('fpa_filter', perm, {path: '/'});
+    $.cookie('fpa_module_match', module_match, {path: '/'});
           
-    /**
-     * Prevent the current filter from being cleared on form reset.
-     * 
-     * element.defaultValue is what 'input' elements reset to.
-     * 
-     * @see http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-26091157
-     */
-    this.dom.filter.get(0).defaultValue = perm;
+    this.save_filters();
     
     var filter_selector = this.get_filter_selectors(perm, module_match);
     
@@ -260,16 +276,7 @@
   // Even handler for role selection.
   Fpa.prototype.filter_roles = function () {
     
-    /**
-     * Prevent the current filter from being cleared on form reset.
-     * 
-     * element.defaultSelected is what 'option' elements reset to.
-     * 
-     * @see http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-37770574
-     */
-    this.dom.role_select.find('option').each(function (index, element) {
-      element.defaultSelected = element.selected;
-    });
+    this.save_filters();
     
     var values = this.dom.role_select.val() || [];
     var role_style_code = [];
@@ -386,20 +393,18 @@
       }, this))
     ;
     
-    // Set default value of filter field if the server is providing one.
-    this.dom.filter
-      .keyup()
-    ;
-    
     // Handle links to sections on permission admin page.
     this.dom.form
       .delegate('a[href*="admin/people/permissions#"]', 'click', $.proxy(function fpa_inter_page_links_click(e) {
+        e.preventDefault();
         e.stopPropagation();
         
         this.dom.module_list
-          .find('li[' + this.attr.module + '~="' + this.drupal_html_class(this.hash.substring(8)) + '"]')
+          .find('li[' + this.attr.module + '~="' + this.drupal_html_class(e.currentTarget.hash.substring(8)) + '"]')
           .click()
         ;
+        
+        $('body').scrollTop(this.dom.container.position().top);
       }, this))
     ;
     
@@ -507,12 +512,6 @@
     // Change visible roles.
     this.dom.role_select
       .bind('change blur', $.proxy(this.filter_roles, this))
-      .change()
-      // Prevent <option /> elements from bubbling mouseout event.
-      .find('option')
-      .mouseout(function (e) {
-        e.stopPropagation();
-      })
     ;
     
     // Focus on element takes long time, bump after normal execution.
@@ -523,7 +522,7 @@
   };
   
   Fpa.prototype.dummy_checkbox_behavior = function () {
-    
+    // 'this' refers to the element, not the 'Fpa' instance.
     $(this).closest('tr').toggleClass('fpa-authenticated-role-behavior', this.checked);
   };
   

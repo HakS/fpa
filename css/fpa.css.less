@@ -230,15 +230,6 @@ div.ctools-modal-content .fpa-container .form-item label {
 }
 
 /**
- * Tweak how the table is initially displayed to prevent premature reflow.
- * 
- * The table is displayed with a <style /> tag immediately after in the HTML.
- */
-#permissions {
-  display: none;
-}
-
-/**
  *   Styling for injected checkboxes.
  */
 
@@ -347,6 +338,17 @@ html.js .fpa-filter-form {
   display: block;
 }
 
+
+
+/**
+ * Tweak how the table is initially displayed to prevent premature reflow.
+ * 
+ * The table is displayed with a <style /> tag immediately after in the HTML.
+ */
+#permissions {
+  display: none;
+}
+
 .fpa-table-wrapper {
   background-repeat: no-repeat;
   background-position: center -18px;
@@ -354,13 +356,15 @@ html.js .fpa-filter-form {
   min-height: 18px;
 }
 
+
+
 .fpa-role-styles,
 .fpa-perm-styles {
   display: none;
 }
 
 .fpa-wrapper {
-  display: table;
+  display: table;// Need this to go full width.
 }
 
 .dummy-checkbox {

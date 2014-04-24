@@ -430,6 +430,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
    * @todo need to generate initial styles on server side for initial page load performance.
    */
   
+  
   /**
    * Left section contains module list and form submission button.
    */
@@ -609,6 +610,47 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     '#value' => $default_filter,
   );
   
+  /*
+   * Populate the permission filter styles.
+   */
+  $matches = array();
+  
+  preg_match('/^\s*([^@]*)@?(.*?)\s*$/i', $filter_form['permission_module_filter']['#value'], $matches);
+  
+  array_shift($matches); // Remove whole match item.
+  
+  $safe_matches = array_map('drupal_html_class', $matches);
+  
+  $module_match = !empty($_COOKIE['module_match']) ? $_COOKIE['module_match'] : '*=';
+  
+  $filters = array(
+    drupal_strlen($safe_matches[0]) > 0 ? ('[' . FPA_ATTR_PERMISSION .               '*="' . $safe_matches[0] . '"]') : '',
+    drupal_strlen($safe_matches[1]) > 0 ? ('[' . FPA_ATTR_MODULE     . $module_match . '"' . $safe_matches[1] . '"]') : '',
+  );
+  
+  $filter_styles = array(
+    '.fpa-table-wrapper tr[' . FPA_ATTR_MODULE . ']{display: none;}',
+    
+    '.fpa-table-wrapper tr[' . FPA_ATTR_MODULE . ']',
+    $filters[0],
+    $filters[1],
+    '{display: table-row;}',
+    
+    
+    '.fpa-perm-counter{display: none;}',
+    '.fpa-perm-counter',
+    $filters[0],
+    '{display: inline;}',
+    
+    
+    '.fpa-left-section li[' . FPA_ATTR_MODULE . ']',
+    drupal_strlen($filters[1]) > 0 ? $filters[1] : '[' . FPA_ATTR_MODULE . '=""]',
+    '{margin-right:-1px; background-color: white; border-right: solid 1px transparent;}',
+  );
+  
+  $wrapper['perm_styles']['style']['#value'] = implode('', $filter_styles);
+  
+  
   $cookie_roles = (!empty($_COOKIE['fpa_roles']) && $same_page) ? json_decode($_COOKIE['fpa_roles']) : array();
   
   $options = array(
@@ -636,6 +678,26 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     '#value' => count(array_intersect($cookie_roles, array_keys($options))) > 0 ? $cookie_roles : array('*'),
   );
   
+  /*
+   * Populate the roles styles.
+   */
+  if (!in_array('*', $filter_form['role_filter']['#value'])) {
+    
+    $role_styles = array(
+      '.fpa-table-wrapper [' . FPA_ATTR_ROLE . '] {display: none;}',
+    );
+    
+    foreach ($filter_form['role_filter']['#value'] as $value) {
+      
+      $role_styles[] = '.fpa-table-wrapper [' . FPA_ATTR_ROLE . '="' . $value . '"] {display: table-cell;}';
+      
+    }
+    
+    $role_styles[] = '.fpa-table-wrapper [' . FPA_ATTR_ROLE . '="' . end($filter_form['role_filter']['#value']) . '"] {border-right: 1px solid #bebfb9;}';
+    
+    $wrapper['role_styles']['style']['#value'] = implode('', $role_styles);
+  }
+  
   $right_section['filter_form'] = $filter_form;
   
   $table_wrapper = array(
@@ -656,7 +718,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     ),
   );
   
-  // Hide table until full table HTML is loaded. Reduces progressive table load reflow.
+  // Show after full table HTML is loaded. Reduces progressive table load reflow/repaint.
   $table_wrapper['show_table'] = array(
     '#type' => 'html_tag',
     '#tag' => 'style',
