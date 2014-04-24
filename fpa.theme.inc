@@ -103,12 +103,16 @@ function theme_fpa_user_admin_permissions($variables) {
     ),
   );
   
+  $checkboxes_children = element_children($form['checkboxes']);
+  
   // Prepare role names processed by drupal_html_class() ahead of time.
   $roles_attr_values = array();
   
-  foreach (element_children($form['checkboxes']) as $rid) {
+  foreach ($checkboxes_children as $rid) {
     $roles_attr_values[$rid] = drupal_html_class($form['role_names'][$rid]['#markup']);
   }
+  
+  $first_role_index = array_shift($checkboxes_children);
   
   // Lists for wrapper.
   $modules = array();
@@ -120,8 +124,6 @@ function theme_fpa_user_admin_permissions($variables) {
   // Row counter.
   $i = 0;
   
-  $first_permission_index = array_shift(element_children($form['checkboxes']));
-
   $rows = array();
 
   // Iterate over rows in form table.
@@ -182,8 +184,8 @@ function theme_fpa_user_admin_permissions($variables) {
       $permission_system_name = '';
       
       // Might be empty if no modules are displayed in Permissions Filter module.
-      if (!empty($form['checkboxes'][$first_permission_index])) {
-        $permission_system_name = $form['checkboxes'][$first_permission_index][$key]['#return_value'];
+      if (!empty($form['checkboxes'][$first_role_index])) {
+        $permission_system_name = $form['checkboxes'][$first_role_index][$key]['#return_value'];
       }
       
       $label = $permission_col_template;
