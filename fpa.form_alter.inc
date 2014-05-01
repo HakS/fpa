@@ -46,6 +46,9 @@ function fpa_form_user_admin_permissions_alter(&$form, &$form_state) {
           'permission' => FPA_ATTR_PERMISSION,
           'module' =>     FPA_ATTR_MODULE,
           'role' =>       FPA_ATTR_ROLE,
+          
+          'checked' =>       FPA_ATTR_CHECKED,
+          'not_checked' =>       FPA_ATTR_NOT_CHECKED,
         ),
       ),
     ),

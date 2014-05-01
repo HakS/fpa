@@ -169,15 +169,27 @@
     
     filters = filters || this.get_filter_selectors();
     
-    return [
+    var checked_filters = this.build_checked_selectors();
+    
+    var styles = [
       this.selector.table_base_selector,
-      '{display: none;}',
+      '{display: none;}'
+    ];
+    
+    for (var i = 0; i < checked_filters.length; i++) {
       
-      this.selector.table_base_selector,
-      filters[0],
-      filters[1],
-      '{display: table-row;}'
-    ].join('');
+      styles = styles.concat([
+        this.selector.table_base_selector,
+        
+        checked_filters[i],
+        
+        filters[0],
+        filters[1],
+        '{display: table-row;}'
+      ]);
+    }
+    
+    return styles.join('');
     
   };
   
@@ -206,28 +218,6 @@
       this.styles.module_active_style
     ].join('');
     
-  };
-  
-  /**
-   * Prevent the current filter from being cleared on form reset.
-   */
-  Fpa.prototype.save_filters = function () {
-    
-    /**
-     * element.defaultValue is what 'input' elements reset to.
-     * 
-     * @link http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-26091157
-     */
-    this.dom.filter.get(0).defaultValue = this.dom.filter.val();
-    
-    /**
-     * element.defaultSelected is what 'option' elements reset to.
-     * 
-     * @see http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-37770574
-     */
-    this.dom.role_select.find('option').each(function (index, element) {
-      element.defaultSelected = element.selected;
-    });
   };
   
   Fpa.prototype.filter = function (module_match) {
@@ -273,6 +263,40 @@
     return selectors;
   };
   
+  Fpa.prototype.build_checked_selectors = function (roles) {
+    
+    roles = roles || this.dom.role_select.val();
+    
+    var checked_boxes = $.map(this.dom.checked_status, function (element, index) {
+      return element.checked ? $(element).val() : null;
+    });
+    
+    var selectors = [''];
+    
+    if ($.inArray('*', roles) !== -1) {
+      roles = $.map(this.dom.role_select.find('option').not('[value="*"]'), $.proxy(function (element, index) {
+        
+        return $(element).attr('value');
+        
+      }, this));
+    }
+    
+    if (checked_boxes.length != this.dom.checked_status.length) {
+      
+      selectors = $.map(roles, $.proxy(function (value, index) {
+        
+        return $.map(checked_boxes, $.proxy(function (checked_attr, index) {
+          
+          return '[' + checked_attr + '~="' + value + '"]';
+          
+        }, this));
+        
+      }, this));
+    }
+    
+    return selectors;
+  };
+  
   // Even handler for role selection.
   Fpa.prototype.filter_roles = function () {
     
@@ -308,6 +332,8 @@
     }
     
     this.set_style(this.dom.role_style, role_style_code.join(''));
+    
+    this.filter();
   };
   
   Fpa.prototype.select = function (context) {
@@ -336,10 +362,43 @@
     this.dom.module_list = this.dom.section_left.find('ul');
     
     this.dom.filter_form = this.dom.container.find('.fpa-filter-form');
+    
     this.dom.filter = this.dom.filter_form.find('input[type="text"]');
     this.dom.role_select = this.dom.filter_form.find('select');
+    this.dom.checked_status = this.dom.filter_form.find('input[type="checkbox"]');
     
     return true;
+  };
+  
+  /**
+   * Prevent the current filter from being cleared on form reset.
+   */
+  Fpa.prototype.save_filters = function () {
+    
+    /**
+     * element.defaultValue is what 'text' elements reset to.
+     * 
+     * @link http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-26091157
+     */
+    this.dom.filter.get(0).defaultValue = this.dom.filter.val();
+    
+    /**
+     * element.defaultSelected is what 'option' elements reset to.
+     * 
+     * @see http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-37770574
+     */
+    this.dom.role_select.find('option').each(function (index, element) {
+      element.defaultSelected = element.selected;
+    });
+    
+    /**
+     * element.defaultChecked is what 'checkbox' elements reset to.
+     * 
+     * @see http://www.w3.org/TR/REC-DOM-Level-1/level-one-html.html#ID-20509171
+     */
+    this.dom.checked_status.each(function (index, element) {
+      element.defaultChecked = element.checked;
+    });
   };
   
   Fpa.prototype.prepare = function () {
@@ -499,7 +558,7 @@
     
     // Clear contents of search field and reset visible permissions.
     this.dom.section_right
-      .delegate('.fpa-clear-search', 'click', $.proxy(function () {
+      .delegate('.fpa-clear-search', 'click', $.proxy(function (e) {
         
         this.dom.filter
           .val('')
@@ -512,6 +571,16 @@
     // Change visible roles.
     this.dom.role_select
       .bind('change blur', $.proxy(this.filter_roles, this))
+    ;
+    
+    this.dom.checked_status
+      .bind('change', $.proxy(function (e) {
+        
+        this.save_filters();
+        
+        this.filter();
+        
+      }, this))
     ;
     
     // Focus on element takes long time, bump after normal execution.

@@ -135,6 +135,8 @@ function theme_fpa_user_admin_permissions($variables) {
       'title' => array(), // HTML attribute on table row tag.
       FPA_ATTR_MODULE => array(), // HTML attribute on table row tag.
       FPA_ATTR_PERMISSION => array(), // HTML attribute on table row tag.
+      FPA_ATTR_CHECKED => array(),
+      FPA_ATTR_NOT_CHECKED => array(),
     );
     
     // Determine if row is module or permission.
@@ -156,7 +158,7 @@ function theme_fpa_user_admin_permissions($variables) {
         'data' => drupal_render($form['permission'][$key]),
         'class' => array('module'),
         'id' => 'module-' . $form['permission'][$key]['#id'],
-        'colspan' => count($form['role_names']['#value']) + 2,
+        'colspan' => count($form['role_names']['#value']) + 1,
       );
       
       $row['title'] = array($form['permission'][$key]['#id']);
@@ -214,6 +216,13 @@ function theme_fpa_user_admin_permissions($variables) {
           $form['checkboxes'][$rid][$key]['#field_suffix'] = $dummy_checkbox_output;
         }
         
+        if ($form['checkboxes'][$rid][$key]['#checked'] === TRUE) {
+          $row[FPA_ATTR_CHECKED][] = $rid;
+        }
+        else {
+          $row[FPA_ATTR_NOT_CHECKED][] = $rid;
+        }
+        
         $row['data'][] = array(
           'data' => drupal_render($form['checkboxes'][$rid][$key]),
           'class' => array(
@@ -223,7 +232,7 @@ function theme_fpa_user_admin_permissions($variables) {
             $form['role_names'][$rid]['#markup'],
           ),
           FPA_ATTR_ROLE => array(
-            $roles_attr_values[$rid],
+            $rid,
           ),
         );
       }
@@ -253,6 +262,9 @@ function theme_fpa_user_admin_permissions($variables) {
       
       // Add current permission to current module row.
       $rows[$module][FPA_ATTR_PERMISSION] = array_merge($rows[$module][FPA_ATTR_PERMISSION], $row[FPA_ATTR_PERMISSION]);
+      
+      $rows[$module][FPA_ATTR_CHECKED] = array_unique(array_merge($rows[$module][FPA_ATTR_CHECKED], $row[FPA_ATTR_CHECKED]));
+      $rows[$module][FPA_ATTR_NOT_CHECKED] = array_unique(array_merge($rows[$module][FPA_ATTR_NOT_CHECKED], $row[FPA_ATTR_NOT_CHECKED]));
       
       $modules[$rows[$module][FPA_ATTR_MODULE][0]][FPA_ATTR_PERMISSION][] = $row[FPA_ATTR_PERMISSION];
     }
@@ -296,7 +308,7 @@ function theme_fpa_user_admin_permissions($variables) {
         $form['role_names'][$rid]['#markup'],
       ),
       FPA_ATTR_ROLE => array(
-        $roles_attr_values[$rid],
+        $rid,
       ),
     );
     $user_roles[$rid] = $form['role_names'][$rid]['#markup'];
@@ -427,11 +439,6 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
    */
   $wrapper['perm_styles'] = $style_template;
   $wrapper['perm_styles']['#attributes']['class'][0] = 'fpa-perm-styles';
-  
-  /**
-   * @todo need to generate initial styles on server side for initial page load performance.
-   */
-  
   
   /**
    * Left section contains module list and form submission button.
@@ -660,7 +667,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
   );
   
   if (!empty($user_roles)) {
-    $options = array_merge($options, array_combine(array_map('drupal_html_class', $user_roles), $user_roles));
+    $options += $user_roles; // Preserves keys.
   }
   
   if (in_array('*', $cookie_roles)) {
@@ -692,12 +699,33 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     foreach ($filter_form['role_filter']['#value'] as $value) {
       
       $role_styles[] = '.fpa-table-wrapper [' . FPA_ATTR_ROLE . '="' . $value . '"] {display: table-cell;}';
-      
     }
     
     $role_styles[] = '.fpa-table-wrapper [' . FPA_ATTR_ROLE . '="' . end($filter_form['role_filter']['#value']) . '"] {border-right: 1px solid #bebfb9;}';
     
     $wrapper['role_styles']['style']['#value'] = implode('', $role_styles);
+  }
+  
+  $checked_status = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Display permissions that are:'),
+    '#options' => array(
+      FPA_ATTR_CHECKED => t('Checked'),
+      FPA_ATTR_NOT_CHECKED => t('Not Checked'),
+    ),
+    '#attributes' => array(),
+    '#title_display' => 'before',
+    '#description' => t('Applies to all visible roles.<br />Most effective when a single role is visible.'),
+  );
+  
+  $checked_status_keys = array_keys($checked_status['#options']);
+  
+  $checked_status['#value'] = array_combine($checked_status_keys, $checked_status_keys);
+  
+  $filter_form['checked_status'] = form_process_checkboxes($checked_status);
+  
+  foreach (element_children($filter_form['checked_status']) as $key) {
+    $filter_form['checked_status'][$key]['#checked'] = TRUE;
   }
   
   $right_section['filter_form'] = $filter_form;
