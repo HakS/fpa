@@ -56,6 +56,43 @@
   };
   
   /**
+   * Select all elements that are used by FPA ahead of time and cache on 'Fpa' instance.
+   */
+  Fpa.prototype.select = function (context) {
+    
+    this.dom.context = $(context);
+    
+    this.dom.form = this.dom.context.find(this.selector.form);
+    
+    // Prevent anything else from running if the form is not found.
+    if (this.dom.form.length === 0) {
+      return false;
+    }
+    
+    this.dom.container = this.dom.form.find('.fpa-container');
+    
+    // Raw element since $().html(); does not work for <style /> elements.
+    this.dom.perm_style = this.dom.container.find('.fpa-perm-styles style').get(0);
+    this.dom.role_style = this.dom.container.find('.fpa-role-styles style').get(0);
+    
+    this.dom.section_left = this.dom.container.find('.fpa-left-section');
+    this.dom.section_right = this.dom.container.find('.fpa-right-section');
+    
+    this.dom.table_wrapper = this.dom.section_right.find('.fpa-table-wrapper');
+    this.dom.table = this.dom.table_wrapper.find(this.selector.table);
+    
+    this.dom.module_list = this.dom.section_left.find('ul');
+    
+    this.dom.filter_form = this.dom.container.find('.fpa-filter-form');
+    
+    this.dom.filter = this.dom.filter_form.find('input[type="text"]');
+    this.dom.role_select = this.dom.filter_form.find('select');
+    this.dom.checked_status = this.dom.filter_form.find('input[type="checkbox"]');
+    
+    return true;
+  };
+  
+  /**
    * Prepares a string for use as a CSS identifier (element, class, or ID name).
    * 
    * @see https://api.drupal.org/api/drupal/includes!common.inc/function/drupal_clean_css_identifier/7
@@ -336,40 +373,6 @@
     this.filter();
   };
   
-  Fpa.prototype.select = function (context) {
-    
-    this.dom.context = $(context);
-    
-    this.dom.form = this.dom.context.find(this.selector.form);
-    
-    // Prevent anything else from running if the form is not found.
-    if (this.dom.form.length === 0) {
-      return false;
-    }
-    
-    this.dom.container = this.dom.form.find('.fpa-container');
-    
-    // Raw element since $().html(); does not work for <style /> elements.
-    this.dom.perm_style = this.dom.container.find('.fpa-perm-styles style').get(0);
-    this.dom.role_style = this.dom.container.find('.fpa-role-styles style').get(0);
-    
-    this.dom.section_left = this.dom.container.find('.fpa-left-section');
-    this.dom.section_right = this.dom.container.find('.fpa-right-section');
-    
-    this.dom.table_wrapper = this.dom.section_right.find('.fpa-table-wrapper');
-    this.dom.table = this.dom.table_wrapper.find(this.selector.table);
-    
-    this.dom.module_list = this.dom.section_left.find('ul');
-    
-    this.dom.filter_form = this.dom.container.find('.fpa-filter-form');
-    
-    this.dom.filter = this.dom.filter_form.find('input[type="text"]');
-    this.dom.role_select = this.dom.filter_form.find('select');
-    this.dom.checked_status = this.dom.filter_form.find('input[type="checkbox"]');
-    
-    return true;
-  };
-  
   /**
    * Prevent the current filter from being cleared on form reset.
    */
@@ -467,6 +470,7 @@
       }, this))
     ;
     
+    // Handler for links that use #hash and can't be capture server side.
     if(window.location.hash.indexOf('module-') === 1) {
       
       this.dom.module_list
@@ -475,7 +479,11 @@
       ;
     }
     
-    // @todo should this be synchronous?
+    /**
+     * Reset authenticated role behavior when form resets.
+     * 
+     * @todo should this be synchronous? Would have to trigger reset on elements while detached.
+     */
     this.dom.form.bind('reset', $.proxy(function fpa_form_reset(e) {
       
       // Wait till after the form elements have been reset.
@@ -510,10 +518,16 @@
           .detach()
           .each($.proxy(function (index, element) {
             
+            var rid = $this.closest('[' + this.attr.role + ']').attr(this.attr.role);
+            
             $(element)
-              .find('tr' + filters.join('') + ' td.checkbox[' + this.attr.role + '="' + $this.closest('[' + this.attr.role + ']').attr(this.attr.role) + '"] input[type="checkbox"][name]')
+              .find([
+                'tr' + filters.join(''),
+                'td.checkbox[' + this.attr.role + '="' + rid + '"]',
+                'input[type="checkbox"][name]'
+              ].join(' ')) // Array is easier to read, separated for descendant selectors.
               
-              .attr('checked', $this.attr('checked') ? 'checked' : '')
+              .attr('checked', $this.attr('checked'))
               
               .filter('.rid-2') // Following only applies to "Authenticated User" role.
               .each(this.dummy_checkbox_behavior)
@@ -590,6 +604,11 @@
     
   };
   
+  /**
+   * Event handler/iterator.
+   * 
+   * Should not be $.proxy()'d.
+   */
   Fpa.prototype.dummy_checkbox_behavior = function () {
     // 'this' refers to the element, not the 'Fpa' instance.
     $(this).closest('tr').toggleClass('fpa-authenticated-role-behavior', this.checked);
@@ -603,8 +622,6 @@
         $(e.currentTarget).unbind('click.permissions');
       })
       .delegate('input[type=checkbox].rid-2', 'change.fpa_authenticated_role', this.dummy_checkbox_behavior)
-      .find('input[type=checkbox].rid-2:checked')
-      .each(this.dummy_checkbox_behavior)
     ;
   };
   

@@ -212,10 +212,17 @@ function theme_fpa_user_admin_permissions($variables) {
         // Filter permissions strips role id class from checkbox. Used by Drupal core functionality.
         $form['checkboxes'][$rid][$key]['#attributes']['class'][] = 'rid-' . $rid;
         
-        if ($rid > 2) {
-          $form['checkboxes'][$rid][$key]['#field_suffix'] = $dummy_checkbox_output;
+        // Set authenticated role behavior class on page load.
+        if ($rid == 2 && $form['checkboxes'][$rid][$key]['#checked'] === TRUE) {
+          $row['class'][] = 'fpa-authenticated-role-behavior';
         }
         
+        // For all roles that inherit permissions from 'authenticated user' role, add in dummy checkbox for authenticated role behavior.
+        if ($rid > 2) {
+          $form['checkboxes'][$rid][$key]['#suffix'] = $dummy_checkbox_output; // '#suffix' doesn't have wrapping HTML like '#field_suffix'.
+        }
+        
+        // Add rid's to row attribute for checked status filter.
         if ($form['checkboxes'][$rid][$key]['#checked'] === TRUE) {
           $row[FPA_ATTR_CHECKED][] = $rid;
         }
@@ -231,6 +238,7 @@ function theme_fpa_user_admin_permissions($variables) {
           'title' => array(
             $form['role_names'][$rid]['#markup'],
           ),
+          // For role filter
           FPA_ATTR_ROLE => array(
             $rid,
           ),
