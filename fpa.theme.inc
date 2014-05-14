@@ -723,7 +723,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     ),
     '#attributes' => array(),
     '#title_display' => 'before',
-    '#description' => t('Applies to all visible roles.<br />Most effective when a single role is visible.'),
+    '#description' => t('Applies to all visible roles.<br />Unsaved changes are not counted.<br />Most effective when a single role is visible.<br />Empty module rows sometimes display when used with permission filter.'),
   );
   
   $checked_status_keys = array_keys($checked_status['#options']);

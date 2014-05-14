@@ -12,28 +12,9 @@ define('FPA_ATTR_ROLE',       'fpa-role');
 define('FPA_ATTR_CHECKED',       'fpa-checked');
 define('FPA_ATTR_NOT_CHECKED',       'fpa-not-checked');
 
-/**
- * Implements hook_hook_info().
- */
-function fpa_hook_info() {
-  $hooks = array();
-  
-  $hooks['theme'] = array(
-    'group' => 'theme',
-  );
-  
-  $hooks['form_node_type_form_alter'] = array(
-    'group' => 'form_alter',
-  );
-  $hooks['form_user_admin_permissions_alter'] = array(
-    'group' => 'form_alter',
-  );
-  $hooks['form_filter_perms_admin_perm_filter_alter'] = array(
-    'group' => 'form_alter',
-  );
-  
-  return $hooks;
-}
+// Replacement for improper use of hook_hook_info().
+require_once dirname(__FILE__) . '/fpa.theme.inc';
+require_once dirname(__FILE__) . '/fpa.form_alter.inc';
 
 /**
  * Implements hook_menu().
