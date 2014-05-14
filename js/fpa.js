@@ -34,6 +34,8 @@
     this.filter_timeout= null;
     this.filter_timeout_time = 0;
     
+    this.module_match = '*=';
+    
     this.filter_selector_cache = {
       '*=': {},
       '~=': {}
@@ -173,10 +175,12 @@
      * 
      * @see http://www.w3.org/TR/CSS2/selector.html#matching-attrs
      */
-    this.filter('~=');
+    this.module_match = '~=';
+    
+    this.filter();
   };
   
-  Fpa.prototype.build_filter_selectors = function (filter_string, module_match) {
+  Fpa.prototype.build_filter_selectors = function (filter_string) {
     
     // Extracts 'permissions@module', trimming leading and trailing whitespace.
     var matches = filter_string.match(/^\s*([^@]*)@?(.*?)\s*$/i);
@@ -185,21 +189,19 @@
     
     var safe_matches = $.map(matches, $.proxy(this.drupal_html_class, this));
     
-    this.filter_selector_cache[module_match][filter_string] = [
+    this.filter_selector_cache[this.module_match][filter_string] = [
       safe_matches[0].length > 0 ? '[' + this.attr.permission          + '*="' + safe_matches[0] + '"]' : '',
-      safe_matches[1].length > 0 ? '[' + this.attr.module + module_match + '"' + safe_matches[1] + '"]' : ''
+      safe_matches[1].length > 0 ? '[' + this.attr.module + this.module_match + '"' + safe_matches[1] + '"]' : ''
     ];
     
-    return this.filter_selector_cache[module_match][filter_string];
+    return this.filter_selector_cache[this.module_match][filter_string];
   };
   
-  Fpa.prototype.get_filter_selectors = function (filter_string, module_match) {
-    
-    module_match = module_match || '*=';
+  Fpa.prototype.get_filter_selectors = function (filter_string) {
     
     filter_string = filter_string || this.dom.filter.val();
     
-    return this.filter_selector_cache[module_match][filter_string] || this.build_filter_selectors(filter_string, module_match);
+    return this.filter_selector_cache[this.module_match][filter_string] || this.build_filter_selectors(filter_string);
   };
   
   Fpa.prototype.permission_grid_styles = function (filters) {
@@ -257,19 +259,16 @@
     
   };
   
-  Fpa.prototype.filter = function (module_match) {
-    
-    // Assign default value if undefined.
-    module_match = module_match || '*=';
+  Fpa.prototype.filter = function () {
     
     var perm = this.dom.filter.val();
     
     $.cookie('fpa_filter', perm, {path: '/'});
-    $.cookie('fpa_module_match', module_match, {path: '/'});
+    $.cookie('fpa_module_match', this.module_match, {path: '/'});
           
     this.save_filters();
     
-    var filter_selector = this.get_filter_selectors(perm, module_match);
+    var filter_selector = this.get_filter_selectors(perm);
     
     this.set_style(this.dom.perm_style, [
       
@@ -444,6 +443,8 @@
             this.dom.table_wrapper
               .detach()
               .each($.proxy(function (index, element) {
+                
+                this.module_match = '*=';
                 
                 this.filter();
               }, this))
