@@ -25,11 +25,7 @@
     
     this.dom = {};
     
-    this.attr = settings.attr || {
-      permission: "fpa-permission",
-      module: "fpa-module",
-      role: "fpa-role"
-    };
+    this.attr = settings.attr;
     
     this.filter_timeout= null;
     this.filter_timeout_time = 0;
@@ -595,6 +591,24 @@
         
         this.filter();
         
+      }, this))
+    ;
+
+    /**
+     * System name is not normally selectable because its a pseudo-element.
+     *
+     * This detects clicks directly on the TR, which happens when a click is on
+     * the pseudo-element, and displays a prompt() with the system name as the
+     * pre-populated value.
+     */
+    this.dom.table
+      .delegate('tr[' + this.attr.system_name + ']', 'click', $.proxy(function (e) {
+        var $target = $(e.target);
+
+        if ($target.is('tr[' + this.attr.system_name + ']')) {
+
+          window.prompt('You can grab the system name here', $target.attr(this.attr.system_name));
+        }
       }, this))
     ;
     

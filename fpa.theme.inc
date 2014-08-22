@@ -163,7 +163,7 @@ function theme_fpa_user_admin_permissions($variables) {
       
       $row['title'] = array($form['permission'][$key]['#id']);
       
-      $row['fpa-system-name'] = $row[FPA_ATTR_MODULE][0];
+      $row[FPA_ATTR_SYSTEM_NAME] = $row[FPA_ATTR_MODULE][0];
       
       $row[FPA_ATTR_MODULE] = array_unique(array_map('drupal_html_class', $row[FPA_ATTR_MODULE]));
       
@@ -250,7 +250,7 @@ function theme_fpa_user_admin_permissions($variables) {
           $form['checkboxes'][$rid][$key]['#return_value'],
         );
         
-        $row['fpa-system-name'] = array(
+        $row[FPA_ATTR_SYSTEM_NAME] = array(
           $form['checkboxes'][$rid][$key]['#return_value'],
         );
       }
@@ -360,14 +360,9 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
       'show' => t('Show system names'),
     ),
   );
-  
-  foreach ($hiders as $hide_class => $labels) {
-    
-    if (!isset($_COOKIE[$hide_class]) || !$same_page || ($same_page && $_COOKIE[$hide_class] == 'true')) {
-      $render['#attributes']['class'][] = $hide_class;
-    }
-  }
-  
+
+  $render['#attributes']['class'][] = 'fpa-hide-system-names';
+
   $hide_container = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -377,25 +372,19 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     ),
   );
   
-  $toggle_link_template = array(
-    '#type' => 'markup', // html_tag adds erroneous newlines, which mess with inline elements.
-    '#markup' => '',
-    '#prefix' => '<span class="fpa-toggle-link">',
-    '#suffix' => '</span>'
-  );
-  
   foreach ($hiders as $hide_class => $labels) {
     
     $hide_container[$hide_class] = array(
       '#theme' => 'link',
       '#text' => '',
-      '#path' => $_GET['q'],
+      '#path' => '',
       '#options' => array(
         'attributes' => array_merge($labels, array(
           'fpa-toggle-class' => $hide_class,
         )),
         'html' => TRUE,
         'fragment' => ' ',
+        'external' => TRUE, // Prevent base path from being added to link.
       ),
     );
   }
