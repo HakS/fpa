@@ -519,7 +519,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
     $module_item = $module_template;
     
     $module_item[FPA_ATTR_MODULE] = $module[FPA_ATTR_MODULE];
-    $module_item[FPA_ATTR_PERMISSION] = array_reduce($module[FPA_ATTR_PERMISSION], 'array_merge', array());
+    $module_item[FPA_ATTR_PERMISSION] = array_reduce(array_pad($module[FPA_ATTR_PERMISSION], 1, array()), 'array_merge', array());
     
     // Use link for accessibility and tabability.
     $options = array(
