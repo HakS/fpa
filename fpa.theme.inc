@@ -723,6 +723,7 @@ function _fpa_wrapper($permissions_table, $modules, $user_roles, $actions_output
   
   foreach (element_children($filter_form['checked_status']) as $key) {
     $filter_form['checked_status'][$key]['#checked'] = TRUE;
+    $filter_form['checked_status'][$key]['#id'] = drupal_html_id('edit-checkboxes-' . $key);
   }
   
   $right_section['filter_form'] = $filter_form;
