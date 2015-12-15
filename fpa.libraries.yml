@@ -1,0 +1,9 @@
+fpa.user.permissions:
+  version: 1.x
+  css:
+    theme:
+      css/fpa.css: {}
+  js:
+    js/fpa.js: {}
+  dependencies:
+    - core/drupalSettings
