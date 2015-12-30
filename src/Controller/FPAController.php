@@ -28,13 +28,12 @@ class FPAController extends ControllerBase {
 //  }
 
   public function permissionsList() {
-//    $router = \Drupal::service('router');_fpa_wrapper
-//    kint($router->getRouteCollection()->all());
+    $render = FPAFormBuilder::renderForm();
 
-
-    $render = FPAFormBuilder::getRenderArray();
-
-    return $render;
+    return [
+      '#type' => 'markup',
+      '#markup' => $render,
+    ];
   }
 
 }
