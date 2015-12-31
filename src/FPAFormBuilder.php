@@ -13,6 +13,7 @@ use Drupal\Core\Render\Element;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Render\Element\Checkboxes;
 use Drupal\Core\Form\FormState;
+use Drupal\Core\Link;
 
 /**
  * Class FPAFormBuilder.
@@ -46,28 +47,27 @@ class FPAFormBuilder{
     return ((!$memory_limit) || ($memory_limit == -1) || (Bytes::toInt($memory_limit) >= Bytes::toInt($permissions_memory_required)));
   }
 
-  public static function renderForm() {
+  public static function buildFPAPage() {
     $form = \Drupal::service('form_builder')->getForm('\Drupal\user\Form\UserPermissionsForm');
 
-    $form['#attached']['library'][] = 'system';
-    $form['#attached']['library'][] = 'jquery.cookie';
-    $form['#attached']['library'][] = 'fpa/fpa.user.permissions';
-    $form['#attached']['drupalSettings'] = array(
-      'fpa' => array(
-        'attr' => array(
-          'permission' =>  FPA_ATTR_PERMISSION,
-          'module' =>      FPA_ATTR_MODULE,
-          'role' =>        FPA_ATTR_ROLE,
+    $render = static::buildTable($form);  
+    $render['#attached']['library'][] = 'fpa/fpa.permissions';
+//    $render['#attached']['drupalSettings'] = array(
+//      'fpa' => array(
+//        'attr' => array(
+//          'permission' =>  FPA_ATTR_PERMISSION,
+//          'module' =>      FPA_ATTR_MODULE,
+//          'role' =>        FPA_ATTR_ROLE,
+//
+//          'checked' =>     FPA_ATTR_CHECKED,
+//          'not_checked' => FPA_ATTR_NOT_CHECKED,
+//
+//          'system_name' => FPA_ATTR_SYSTEM_NAME,
+//        )
+//      )
+//    );
 
-          'checked' =>     FPA_ATTR_CHECKED,
-          'not_checked' => FPA_ATTR_NOT_CHECKED,
-
-          'system_name' => FPA_ATTR_SYSTEM_NAME,
-        )
-      )
-    );
-    return static::buildTable($form);
-//      return $form;
+    return $render;
   }
 
   protected static function buildTable($form) {
@@ -85,8 +85,6 @@ class FPAFormBuilder{
         ),
       ),
     );
-
-    $nameless_checkbox_output = $renderer->render($nameless_checkbox);
 
     $dummy_checkbox = array(
       '#type' => 'html_tag',
@@ -111,9 +109,7 @@ class FPAFormBuilder{
           'fpa-permission-container',
         ),
       ),
-      'description' => array(
-          '#markup' => '',
-      ),
+      'description' => array(),
       'checkbox_cell' => array(
         '#type' => 'container',
         '#attributes' => array(
@@ -135,14 +131,12 @@ class FPAFormBuilder{
             '#tag' => 'label',
             '#attributes' => array(
               'class' => array(
-                'element-invisible',
+                'visually-hidden',
               ),
             ),
             '#value' => 'test',
           ),
-          'checkbox' => array(
-            '#markup' => $nameless_checkbox,
-          ),
+          'checkbox' => $nameless_checkbox
         ),
       ),
     );
@@ -185,6 +179,7 @@ class FPAFormBuilder{
       );
 
       $current_element = $form['permissions'][$key];
+      hide($form['permissions'][$key]);
       $sub_children = Element::children($current_element);
 
       // Determine if row is module or permission.
@@ -202,8 +197,9 @@ class FPAFormBuilder{
         );
 
         // Readable
+        hide($form['permissions'][$key][0]);
         $row['data'][] = array(
-          'data' => $renderer->render($form['permissions'][$key][0]),
+          'data' => $form['permissions'][$key][0],
           'class' => array('module'),
           'id' => 'module-' . $key,
           'colspan' => count($form['role_names']['#value']) + 1,
@@ -245,7 +241,7 @@ class FPAFormBuilder{
 
         $label = $permission_col_template;
 
-        $label['description']['#markup'] = $renderer->render($current_element);
+        $label['description'] = $current_element;
 
         // TODO: work on integration with permission filter module
 //        // Permissions filter might cause no Roles to display.
@@ -255,12 +251,13 @@ class FPAFormBuilder{
 
         // Readable
         $row['data'][] = array(
-          'data' => $renderer->render($label),
+          'data' => $label,
           'class' => array('permission'),
         );
 
         foreach ($roles_keys as $rid) {
           $checkbox = $form['permissions'][$key][$rid];
+          hide($form['permissions'][$key][$rid]);
           $checkbox['#title'] = $roles[$rid]->get('label') . ': ' . $checkbox['#title'];
           $checkbox['#title_display'] = 'invisible';
 
@@ -274,7 +271,7 @@ class FPAFormBuilder{
 
           // For all roles that inherit permissions from 'authenticated user' role, add in dummy checkbox for authenticated role behavior.
           // TODO: needs further testing
-          if ($rid != 'anonymous') {
+          if ($rid != 'anonymous' && $rid != 'authenticated') {
             $checkbox['#suffix'] = $dummy_checkbox_output; // '#suffix' doesn't have wrapping HTML like '#field_suffix'.
           }
 
@@ -287,7 +284,7 @@ class FPAFormBuilder{
           }
 
           $row['data'][] = array(
-            'data' => $renderer->render($checkbox),
+            'data' => $checkbox,
             'class' => array(
               'checkbox',
             ),
@@ -357,21 +354,34 @@ class FPAFormBuilder{
       array_unshift($form['actions'], $reset_button);
     }
 
-    $actions_output = '';
+    $actions_output = [];
     foreach (Element::children($form['actions']) as $key) {
-      $actions_output .= $renderer->render($form['actions'][$key]);
+      $actions_output[] = $form['actions'][$key];
     }
 
     $header = array();
 
     $header[] = array(
-      'data' => t('Permission') . $actions_output,
+      'data' => [
+        'label' => [
+          '#type' => 'markup',
+          '#markup' => t('Permission'),
+        ],
+        'actions' => $actions_output
+      ],
     );
 
     foreach ($form['role_names']['#value'] as $rid => $label) {
+      hide($form['role_names']['#value'][$rid]);
 
       $header[] = array(
-        'data' => $label . $nameless_checkbox_output,
+        'data' => [
+          'label' => [
+            '#type' => 'markup',
+            '#markup' => $label
+          ],
+          'checkbox' => $nameless_checkbox
+        ],
         'class' => array(
           'checkbox',
         ),
@@ -390,13 +400,14 @@ class FPAFormBuilder{
       'rows' => $rows,
     );
 
-    $output = static::buildTableWrapper($table, $modules, $user_roles, $actions_output);
+    $table_wrapper = static::buildTableWrapper($table, $modules, $user_roles, $actions_output);
 
     foreach (Element::children($form) as $key) {
-      $output .= $renderer->render($form[$key]);
+      if ($key == 'actions' || $key == 'permissions') continue;
+      $table_wrapper[$key] = $form[$key];
     }
 
-    return $output;
+    return $table_wrapper;
   }
 
   protected static function buildTableWrapper($permissions_table, $modules, $user_roles, $actions_output) {
@@ -531,16 +542,15 @@ class FPAFormBuilder{
     $wrapper['right_section'] = &$right_section;
 
     $module_template = array(
-      FPA_ATTR_MODULE => array(),
-      FPA_ATTR_PERMISSION => array(),
+      '#wrapper_attributes' => array(
+        FPA_ATTR_MODULE => array(),
+        FPA_ATTR_PERMISSION => array()
+      ),
       'data' => array(
         '#type' => 'container',
         '#attributes' => array(),
 
-        'link' => array(
-          '#type' => 'markup',
-          '#markup' => '', // l($module['text'], 'admin/people/permissions', $options)
-        ),
+        'link' => NULL,
 
         'counters' => array(),
 
@@ -582,8 +592,8 @@ class FPAFormBuilder{
 
       $module_item = $module_template;
 
-      $module_item[FPA_ATTR_MODULE] = $module[FPA_ATTR_MODULE];
-      $module_item[FPA_ATTR_PERMISSION] = array_reduce($module[FPA_ATTR_PERMISSION], 'array_merge', array());
+      $module_item['#wrapper_attributes'][FPA_ATTR_MODULE] = $module[FPA_ATTR_MODULE];
+      $module_item['#wrapper_attributes'][FPA_ATTR_PERMISSION] = array_reduce($module[FPA_ATTR_PERMISSION], 'array_merge', array());
 
       // Use link for accessibility and tabability.
       $options = array(
@@ -595,7 +605,8 @@ class FPAFormBuilder{
         $options['attributes']['title'] = $module['title'][0];
       }
 
-//      $module_item['data']['link']['#markup'] = l($module['text'], 'admin/people/permissions', $options);
+      $module_item['data']['link'] = Link::createFromRoute($module['text'], 'user.admin_permissions', array(), $options)->toRenderable();
+//      $module_item['data']['link'] = array('#type' => 'markup', '#markup' => '<h2>xD</h2>');
 
       foreach ($module[FPA_ATTR_PERMISSION] as $module_perm) {
         $counter_item = $counter_template;
@@ -612,19 +623,16 @@ class FPAFormBuilder{
     $items[0]['data']['counters'] = $all_modules_counters;
     $items[0]['data']['total']['#attributes']['fpa-total'] = count($all_modules_counters);
 
-    foreach ($items as &$item) {
-      $item['data'] = $renderer->render($item['data']);
-    }
+//    foreach ($items as &$item) {
+//      $item['data'] = $renderer->render($item['data']);
+//    }
 
     $left_section['list'] = array(
       '#items' => $items,
       '#theme' => 'item_list',
     );
 
-    $left_section['buttons'] = array(
-      '#type' => 'markup',
-      '#markup' => $actions_output,
-    );
+    $left_section['buttons'] = $actions_output;
 
     $filter_form = array(
       '#type' => 'container',
@@ -664,7 +672,6 @@ class FPAFormBuilder{
     $filter_form['permission_module_filter'] = array(
       '#type' => 'textfield',
       '#title' => t('Filter:'),
-      '#description' => t('<p>Enter in the format of "permission@module",</p><p>e.g. <em>admin@system</em> will show only permissions with the<br>text "admin" in modules with the text "system".</p><p>This will also match on system name of a permission.</p>'),
       '#size' => 25,
       '#field_suffix' => $renderer->render($clear_button),
       '#attributes' => array(
@@ -674,6 +681,7 @@ class FPAFormBuilder{
         'autofocus' => 'autofocus',
       ),
       '#value' => $default_filter,
+      '#description' => t('<p>Enter in the format of "permission@module",</p><p>e.g. <em>admin@system</em> will show only permissions with the<br>text "admin" in modules with the text "system".</p><p>This will also match on system name of a permission.</p>'),
     );
 
     /*
@@ -821,13 +829,10 @@ class FPAFormBuilder{
       '#value' => '#permissions {display: table;} .fpa-table-wrapper {background: none;}',
     );
 
-    $table_wrapper['buttons'] = array(
-      '#type' => 'markup',
-      '#markup' => $actions_output,
-    );
+    $table_wrapper['buttons'] = $actions_output;
 
     $right_section['table_wrapper'] = $table_wrapper;
 
-    return $renderer->render($render);
+    return $render;
   }
 }

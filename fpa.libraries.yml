@@ -1,9 +1,13 @@
-fpa.user.permissions:
-  version: 1.x
+fpa.permissions:
+  version: VERSION
   css:
     theme:
-      css/fpa.css: {}
-  js:
-    js/fpa.js: {}
+      css/fpa.admin.css: {}
+#  js:
+#    js/fpa.js: {}
   dependencies:
+    - core/jquery
+    - core/drupal
     - core/drupalSettings
+    - core/jquery.cookie
+    - system
