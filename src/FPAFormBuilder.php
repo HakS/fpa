@@ -50,7 +50,7 @@ class FPAFormBuilder{
   public static function buildFPAPage() {
     $form = \Drupal::service('form_builder')->getForm('\Drupal\user\Form\UserPermissionsForm');
 
-    $render = static::buildTable($form);  
+    $render = static::buildTable($form);
     $render['#attached']['library'][] = 'fpa/fpa.permissions';
 //    $render['#attached']['drupalSettings'] = array(
 //      'fpa' => array(
@@ -606,7 +606,6 @@ class FPAFormBuilder{
       }
 
       $module_item['data']['link'] = Link::createFromRoute($module['text'], 'user.admin_permissions', array(), $options)->toRenderable();
-//      $module_item['data']['link'] = array('#type' => 'markup', '#markup' => '<h2>xD</h2>');
 
       foreach ($module[FPA_ATTR_PERMISSION] as $module_perm) {
         $counter_item = $counter_template;
@@ -622,10 +621,6 @@ class FPAFormBuilder{
 
     $items[0]['data']['counters'] = $all_modules_counters;
     $items[0]['data']['total']['#attributes']['fpa-total'] = count($all_modules_counters);
-
-//    foreach ($items as &$item) {
-//      $item['data'] = $renderer->render($item['data']);
-//    }
 
     $left_section['list'] = array(
       '#items' => $items,
