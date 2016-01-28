@@ -52,20 +52,20 @@ class FPAFormBuilder{
 
     $render = static::buildTable($form);
     $render['#attached']['library'][] = 'fpa/fpa.permissions';
-//    $render['#attached']['drupalSettings'] = array(
-//      'fpa' => array(
-//        'attr' => array(
-//          'permission' =>  FPA_ATTR_PERMISSION,
-//          'module' =>      FPA_ATTR_MODULE,
-//          'role' =>        FPA_ATTR_ROLE,
-//
-//          'checked' =>     FPA_ATTR_CHECKED,
-//          'not_checked' => FPA_ATTR_NOT_CHECKED,
-//
-//          'system_name' => FPA_ATTR_SYSTEM_NAME,
-//        )
-//      )
-//    );
+    $render['#attached']['drupalSettings'] = array(
+      'fpa' => array(
+        'attr' => array(
+          'permission' =>  FPA_ATTR_PERMISSION,
+          'module' =>      FPA_ATTR_MODULE,
+          'role' =>        FPA_ATTR_ROLE,
+
+          'checked' =>     FPA_ATTR_CHECKED,
+          'not_checked' => FPA_ATTR_NOT_CHECKED,
+
+          'system_name' => FPA_ATTR_SYSTEM_NAME,
+        )
+      )
+    );
 
     return $render;
   }
