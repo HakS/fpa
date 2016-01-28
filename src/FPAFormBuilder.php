@@ -407,7 +407,12 @@ class FPAFormBuilder{
       $table_wrapper[$key] = $form[$key];
     }
 
-    return $table_wrapper;
+    unset($form['role_names']);
+    unset($form['permissions']);
+    unset($form['actions']);
+    $form['fpa_container'] = $table_wrapper;
+
+    return $form;
   }
 
   protected static function buildTableWrapper($permissions_table, $modules, $user_roles, $actions_output) {
