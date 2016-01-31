@@ -306,6 +306,13 @@ td.checkbox,
   text-align: left;
 }
 
+#permissions td.module {
+  font-weight: bold;
+}
+#permissions td.permission {
+  padding-left: 1.5em;
+}
+
 /**
  * [checked] is HTML attribute. ':checked' selector is based on DOM property.
  *
@@ -382,7 +389,7 @@ html.js .fpa-filter-form {
   input[type="checkbox"] {
     display: none;
     
-    &.rid-1, &.rid-2, &.dummy-checkbox {
+    &.rid-anonymous, &.rid-authenticated, &.dummy-checkbox {
       display: inline-block;
     }
   }

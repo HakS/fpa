@@ -79,7 +79,7 @@ class FPAFormBuilder{
       '#attributes' => array(
         'type' => 'checkbox',
         'class' => array(
-          'rid-1', // Prevents Drupal core Drupal.behaviors.permissions.toggle from applying.
+          'rid-anonymous', // Prevents Drupal core Drupal.behaviors.permissions.toggle from applying.
           'form-checkbox',
           'fpa-checkboxes-toggle',
         ),
@@ -241,7 +241,7 @@ class FPAFormBuilder{
 
         $label = $permission_col_template;
 
-        $label['description'] = $current_element;
+        $label['description'] = $current_element['description'];
 
         // TODO: work on integration with permission filter module
 //        // Permissions filter might cause no Roles to display.

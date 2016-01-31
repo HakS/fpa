@@ -246,6 +246,12 @@ td.checkbox,
 #permissions td.module {
   text-align: left;
 }
+#permissions td.module {
+  font-weight: bold;
+}
+#permissions td.permission {
+  padding-left: 1.5em;
+}
 /**
  * [checked] is HTML attribute. ':checked' selector is based on DOM property.
  *
@@ -302,8 +308,8 @@ html.js .fpa-filter-form {
 .fpa-authenticated-role-behavior input[type="checkbox"] {
   display: none;
 }
-.fpa-authenticated-role-behavior input[type="checkbox"].rid-1,
-.fpa-authenticated-role-behavior input[type="checkbox"].rid-2,
+.fpa-authenticated-role-behavior input[type="checkbox"].rid-anonymous,
+.fpa-authenticated-role-behavior input[type="checkbox"].rid-authenticated,
 .fpa-authenticated-role-behavior input[type="checkbox"].dummy-checkbox {
   display: inline-block;
 }
