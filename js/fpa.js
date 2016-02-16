@@ -1,4 +1,3 @@
-
 /**
  * @file
  * JS functionality that creates dynamic CSS which hides permission rows and role columns.
@@ -654,7 +653,8 @@
           $(e.currentTarget).triggerHandler('resize.drupal-tableheader');
         })
       ;
-    
+
+      console.log('fpa');
       new Fpa(context, settings.fpa);
     }
   };
