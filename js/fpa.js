@@ -161,7 +161,7 @@
       this.dom.filter.val().replace(/(@.*)/, ''),
       
       // remove trailing @ as that means no module; clean 'All' filter value
-      $this.attr(this.attr.module) !== '' ? '@' + $this.find('a[href]').text() : ''
+      ($this.attr(this.attr.module) !== undefined && $this.attr(this.attr.module) !== '') ? '@' + $this.find('a[href]').text() : ''
       
     ].join('')); 
     
